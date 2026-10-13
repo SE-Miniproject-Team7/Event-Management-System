@@ -9,7 +9,7 @@ A web application for creating events, registering for them (with waitlist), sen
 - Prajin Ravi Shankar (PES1UG24CS328)
 - Rakshan R (PES1UG24CS365)
 - Palash Agarwal (PES1UG24CS312)
-- Veladi Yathindra Deveswar (PES1UG24CS854)
+- Veladi Yathindra Deveswar (PES1UG25CS854)
 
 ## Documentation
 
