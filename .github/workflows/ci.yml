@@ -1,0 +1,31 @@
+name: EMS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install backend dependencies
+        working-directory: server
+        run: npm install
+      - name: Backend syntax check
+        working-directory: server
+        run: |
+          find src -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Install frontend dependencies
+        working-directory: client
+        run: npm install
+      - name: Build frontend
+        working-directory: client
+        run: npm run build
