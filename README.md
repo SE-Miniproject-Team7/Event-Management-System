@@ -26,3 +26,5 @@ A web application for creating events, registering for them (with waitlist), sen
 ## Workflow
 
 Work from assigned issues on the Project board, use a feature branch, open a Pull Request (`Closes #<issue>`), and get it reviewed before merging to `main`.
+
+Local development dry run completed by yathindra854.
