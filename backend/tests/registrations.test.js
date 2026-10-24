@@ -200,7 +200,7 @@ describe('Attendee registration API', () => {
       { $set: { status: 'Confirmed', waitlistPosition: null } },
       expect.objectContaining({
         sort: { createdAt: 1 },
-        new: true,
+        new: false,
         session,
       })
     );
