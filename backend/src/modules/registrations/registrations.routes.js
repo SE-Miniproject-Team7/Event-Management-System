@@ -1,4 +1,4 @@
-﻿const router = require('express').Router();
+const router = require('express').Router();
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Event = require('../../models/Event');
@@ -160,8 +160,21 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
       const promoted = await Registration.findOneAndUpdate(
         { eventId: reg.eventId, status: 'Waitlisted' },
         { $set: { status: 'Confirmed', waitlistPosition: null } },
-        { sort: { createdAt: 1 }, new: true, session }
+        { sort: { createdAt: 1 }, new: false, session }
       );
+
+        // The promoted attendee left the waitlist, so everyone behind moves up one place.
+        if (promoted && Number.isInteger(promoted.waitlistPosition)) {
+          await Registration.updateMany(
+            {
+              eventId: reg.eventId,
+              status: 'Waitlisted',
+              waitlistPosition: { $gt: promoted.waitlistPosition },
+            },
+            { $inc: { waitlistPosition: -1 } },
+            { session }
+          );
+        }
 
       // A promotion replaces the cancelled confirmed attendee, so seatsTaken
       // stays unchanged. If nobody is waiting, release the seat.
