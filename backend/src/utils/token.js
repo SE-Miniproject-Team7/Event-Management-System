@@ -5,7 +5,7 @@ function setAuthCookie(res, user) {
   res.cookie('ems_token', token, {
     httpOnly: true,
     sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
     maxAge: 60 * 60 * 1000,
   });
 }
