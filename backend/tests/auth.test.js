@@ -124,7 +124,7 @@ describe('Authentication', () => {
     });
   });
 
-  test('five consecutive failed attempts lock the account', async () => {
+  test('five consecutive failed attempts lock the account for 15 minutes', async () => {
     user.failedLogins = 4;
 
     const response = await request(app)
@@ -135,19 +135,24 @@ describe('Authentication', () => {
       });
 
     expect(response.status).toBe(423);
-    expect(response.body.error).toMatchObject({
-      code: 'ACCOUNT_LOCKED',
-      message: 'Try again in 12 minutes',
-      retryAfterSeconds: 720,
-    });
+    expect(response.body.error.code).toBe('ACCOUNT_LOCKED');
+    expect(response.body.error.message).toMatch(/Try again in 15 minutes/);
+
+    // Allow for a small timing difference while the request is processed.
+    expect(response.body.error.retryAfterSeconds).toBeGreaterThan(0);
+    expect(response.body.error.retryAfterSeconds).toBeLessThanOrEqual(900);
 
     expect(user.failedLogins).toBe(0);
     expect(user.lockUntil).toBeInstanceOf(Date);
     expect(user.lockUntil.getTime()).toBeGreaterThan(Date.now());
+    expect(user.lockUntil.getTime()).toBeLessThanOrEqual(
+      Date.now() + 15 * 60 * 1000
+    );
     expect(user.save).toHaveBeenCalled();
   });
 
-  test('already locked account returns 423', async () => {
+  test('already locked account returns the remaining lockout time', async () => {
+    // A 12-minute remaining lock proves the response is calculated dynamically.
     user.lockUntil = new Date(Date.now() + 12 * 60 * 1000);
 
     const response = await request(app)
@@ -158,11 +163,10 @@ describe('Authentication', () => {
       });
 
     expect(response.status).toBe(423);
-    expect(response.body.error).toMatchObject({
-      code: 'ACCOUNT_LOCKED',
-      message: 'Try again in 12 minutes',
-      retryAfterSeconds: 720,
-    });
+    expect(response.body.error.code).toBe('ACCOUNT_LOCKED');
+    expect(response.body.error.message).toMatch(/Try again in 12 minutes/);
+    expect(response.body.error.retryAfterSeconds).toBeGreaterThan(0);
+    expect(response.body.error.retryAfterSeconds).toBeLessThanOrEqual(720);
   });
 
   test('inactive user cannot log in', async () => {
@@ -237,5 +241,49 @@ describe('Authentication', () => {
       .set('Cookie', `ems_token=${token}`);
 
     expect(response.status).toBe(401);
+  });
+
+  test('GET /api/auth/me returns the authenticated user', async () => {
+    const token = jwt.sign(
+      { id: 'user123', role: 'Attendee' },
+      process.env.JWT_SECRET,
+      { expiresIn: '60m' }
+    );
+
+    const response = await request(app)
+      .get('/api/auth/me')
+      .set('Cookie', `ems_token=${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.user).toEqual({
+      id: 'user123',
+      name: 'Test User',
+      role: 'Attendee',
+    });
+  });
+
+  test('GET /api/auth/me rejects requests without a token', async () => {
+    const response = await request(app).get('/api/auth/me');
+
+    expect(response.status).toBe(401);
+    expect(response.body.error.code).toBe('UNAUTHENTICATED');
+  });
+
+  test('POST /api/auth/logout clears the authentication cookie', async () => {
+    const response = await request(app).post('/api/auth/logout');
+
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('Logged out successfully');
+
+    const cookies = response.headers['set-cookie'];
+    expect(cookies).toBeDefined();
+
+    const authCookie = cookies.find((cookie) =>
+      cookie.startsWith('ems_token=')
+    );
+
+    expect(authCookie).toBeDefined();
+    expect(authCookie).toMatch(/Expires=/i);
+    expect(authCookie).toMatch(/HttpOnly/i);
   });
 });
