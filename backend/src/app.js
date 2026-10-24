@@ -1,3 +1,4 @@
+
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -8,14 +9,43 @@ const AppError = require('./utils/AppError');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+
+app.disable('x-powered-by');
+
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173', credentials: true }));
+
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  credentials: true,
+}));
+
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
-app.use(rateLimit({ windowMs: 60 * 1000, max: 300 }));
+
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: (req, res, next) =>
+    next(new AppError(429, 'RATE_LIMIT_EXCEEDED', 'Too many requests. Please try again later.')),
+}));
+
+app.use('/api/auth', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: (req, res, next) =>
+    next(new AppError(429, 'AUTH_RATE_LIMIT_EXCEEDED', 'Too many authentication attempts. Please try again later.')),
+}));
 
 app.get('/health', (req, res) =>
-  res.json({ status: 'ok', db: mongoose.connection.readyState === 1 ? 'up' : 'down' }));
+  res.json({
+    status: 'ok',
+    db: mongoose.connection.readyState === 1 ? 'up' : 'down',
+  })
+);
 
 app.use('/api/auth', require('./modules/auth/auth.routes'));
 app.use('/api/categories', require('./modules/categories/categories.routes'));
@@ -23,7 +53,10 @@ app.use('/api/events', require('./modules/events/events.routes'));
 app.use('/api', require('./modules/registrations/registrations.routes'));
 app.use('/api/admin', require('./modules/admin/admin.routes'));
 
-app.use((req, res, next) => next(new AppError(404, 'NOT_FOUND', 'Route not found')));
+app.use((req, res, next) =>
+  next(new AppError(404, 'NOT_FOUND', 'Route not found'))
+);
+
 app.use(errorHandler);
 
 module.exports = app;
