@@ -2,6 +2,7 @@ const router = require('express').Router();
 const mongoose = require('mongoose');
 const Event = require('../../models/Event');
 const Category = require('../../models/Category');
+const Registration = require('../../models/Registration');
 const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
@@ -32,6 +33,7 @@ router.post('/', authenticate, requireRole('Organizer'), asyncHandler(async (req
     title: b.title.trim(), description: b.description.trim(), categoryId: b.categoryId,
     organizerId: req.user._id, venue: b.venue.trim(),
     startAt: start, endAt: end, registrationDeadline: deadline, capacity: b.capacity,
+    status: 'Pending Approval',
   });
   res.status(201).json({ event });
 }));
@@ -100,18 +102,40 @@ router.patch('/:id/approval', authenticate, requireRole('Admin'), asyncHandler(a
   res.json({ event });
 }));
 
-// Organizer cancels own Published event
+// Organizer cancels own Published event. Every active registration is cancelled in the
+// same transaction, so seatsTaken stays equal to the number of Confirmed registrations.
 router.post('/:id/cancel', authenticate, requireRole('Organizer'), asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) throw notFound();
-  const event = await Event.findById(req.params.id);
-  if (!event) throw notFound();
-  if (!event.organizerId.equals(req.user._id)) throw new AppError(403, 'FORBIDDEN', 'Not your event');
-  if (event.status !== 'Published' || event.startAt <= new Date()) {
-    throw new AppError(409, 'CANCEL_NOT_ALLOWED', 'This event cannot be cancelled');
+
+  const session = await mongoose.startSession();
+  let event;
+  let cancelledRegistrations = 0;
+  try {
+    await session.withTransaction(async () => {
+      event = await Event.findById(req.params.id, null, { session });
+      if (!event) throw notFound();
+      if (!event.organizerId.equals(req.user._id)) throw new AppError(403, 'FORBIDDEN', 'Not your event');
+      if (event.status !== 'Published' || event.startAt <= new Date()) {
+        throw new AppError(409, 'CANCEL_NOT_ALLOWED', 'This event cannot be cancelled');
+      }
+
+      const result = await Registration.updateMany(
+        { eventId: event._id, status: { $in: ['Confirmed', 'Waitlisted', 'Checked-in'] } },
+        { $set: { status: 'Cancelled', waitlistPosition: null } },
+        { session }
+      );
+      cancelledRegistrations = result.modifiedCount || 0;
+
+      event.status = 'Cancelled';
+      event.seatsTaken = 0;
+      await event.save({ session });
+    });
+  } finally {
+    await session.endSession();
   }
-  event.status = 'Cancelled';
-  await event.save();
-  res.json({ event });
+
+  // TODO (Sprint 2, EMS-F-024): queue a cancellation email for each affected attendee.
+  res.json({ event, cancelledRegistrations });
 }));
 
 module.exports = router;
