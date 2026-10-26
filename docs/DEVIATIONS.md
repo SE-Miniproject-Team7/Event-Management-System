@@ -11,3 +11,6 @@ Differences between what was built and what the SRS, SAD and Test Plan (v1.0) de
 | 5 | SAD 4.3.2 / EMS-F-012, EMS-F-024 | Cancelling an event notifies attendees | Cancelling an event cancels all active registrations (Confirmed, Waitlisted, Checked-in) and resets seatsTaken to 0 in one transaction. Cancellation emails are not sent yet | Keeps confirmed registrations equal to seatsTaken. Emails depend on the notification queue planned for Sprint 2. |
 | 6 | STP TC-MNT-01, TC-SEC-07 | CI runs lint, tests, npm audit and a gitleaks secret scan | CI runs npm ci, the Jest tests and a non-blocking npm audit | Lint and gitleaks are not configured yet; planned for Sprint 2 if time allows. |
 | 7 | SRS F5, F6, F7, F8 and EMS-F-005, EMS-F-006 | All features in the first two sprints | Email notifications and reminders, check-in, reports and CSV export, admin summary, user management, password reset and profile update are scheduled for Sprint 2; any not finished by the freeze will be listed here | Sprint 1 covered the demo flow: register, login, create event, approve, browse and register for an event. |
+# Deviations from submitted documents
+
+- Event cancellation cancels all active registrations (Confirmed, Waitlisted, Checked-in) and resets seatsTaken to 0 in one transaction. Cancellation emails (EMS-F-024) are deferred to the Sprint 2 notification queue.
