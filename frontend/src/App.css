@@ -417,3 +417,22 @@ a {
     width: 100%;
   }
 }
+.user-greeting {
+  color: #1b2b59;
+  font-weight: 600;
+}
+
+.logout-button {
+  border: 1px solid #d1dbea;
+  border-radius: 8px;
+  padding: 8px 14px;
+  background: white;
+  color: #1b2b59;
+  font: inherit;
+  cursor: pointer;
+}
+
+.logout-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
