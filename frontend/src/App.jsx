@@ -1,6 +1,10 @@
 
 import { Link, Route, Routes } from 'react-router-dom'
 import HomePage from './pages/HomePage.jsx'
+import EventsPage from './pages/EventsPage.jsx'
+import EventDetailsPage from './pages/EventDetailsPage.jsx'
+import LoginPage from './pages/LoginPage.jsx'
+import RegisterPage from './pages/RegisterPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import './App.css'
 
@@ -12,18 +16,29 @@ function App() {
           Event Management System
         </Link>
 
+        <nav className="app-nav">
+          <Link to="/">Home</Link>
+          <Link to="/events">Explore Events</Link>
+          <Link to="/login">Sign in</Link>
+          <Link to="/register">Register</Link>
+        </nav>
+
         <span className="header-label">EMS</span>
       </header>
 
       <main className="app-main">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/events/:id" element={<EventDetailsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
 
       <footer className="app-footer">
-        Event Management System · Team 7
+        Event Management System - Team 7
       </footer>
     </div>
   )
