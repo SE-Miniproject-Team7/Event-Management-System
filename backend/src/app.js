@@ -3,7 +3,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const rateLimit = require('express-rate-limit');
+const { createApiLimiter, createLoginLimiter } = require('./middleware/rateLimit');
 const mongoose = require('mongoose');
 const AppError = require('./utils/AppError');
 const errorHandler = require('./middleware/errorHandler');
@@ -22,23 +22,8 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 300,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
-  handler: (req, res, next) =>
-    next(new AppError(429, 'RATE_LIMIT_EXCEEDED', 'Too many requests. Please try again later.')),
-}));
-
-app.use('/api/auth', rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 20,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
-  handler: (req, res, next) =>
-    next(new AppError(429, 'AUTH_RATE_LIMIT_EXCEEDED', 'Too many authentication attempts. Please try again later.')),
-}));
+app.use('/api', createApiLimiter());
+app.post('/api/auth/login', createLoginLimiter());
 
 app.get('/health', (req, res) =>
   res.json({
