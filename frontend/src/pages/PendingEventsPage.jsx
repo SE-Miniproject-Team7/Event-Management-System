@@ -204,10 +204,10 @@ function PendingEventsPage() {
                   rows={2}
                   minLength={10}
                   value={rejectionReasons[event._id] || ''}
-                  onChange={(event) =>
+                  onChange={(e) =>
                     setRejectionReasons((current) => ({
                       ...current,
-                      [event._id]: event.target.value,
+                      [event._id]: e.target.value,
                     }))
                   }
                   placeholder="Explain why this event cannot be approved"

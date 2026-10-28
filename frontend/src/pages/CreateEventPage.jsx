@@ -131,7 +131,7 @@ function CreateEventPage() {
       )
       setForm(initialForm)
     } catch (err) {
-      const details = err.response?.data?.error?.details
+      const details = err.response?.data?.error?.fields
       const detailMessage = Array.isArray(details)
         ? details.map((item) => item.message).join('. ')
         : ''
