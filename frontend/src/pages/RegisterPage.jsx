@@ -1,4 +1,4 @@
-﻿
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -12,11 +12,13 @@ function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
 
   function clearMessage() {
     setMessage('')
+    setFieldErrors({})
     setSuccess(false)
   }
 
@@ -28,18 +30,25 @@ function RegisterPage() {
     const cleanEmail = email.trim().toLowerCase()
     const cleanPhone = phone.trim()
 
-    if (!cleanName) {
-      setMessage('Please enter your full name.')
-      return
-    }
+    const errors = {}
 
+    if (cleanName.length < 3 || cleanName.length > 60) {
+      errors.name = 'Name must be between 3 and 60 characters.'
+    }
+    if (cleanEmail.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      errors.email = 'Enter a valid email address of at most 100 characters.'
+    }
+    if (cleanPhone && !/^[0-9]{10}$/.test(cleanPhone)) {
+      errors.phone = 'Phone number must contain exactly 10 digits.'
+    }
+    if (password.length < 8 || password.length > 64 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      errors.password = 'Password must be 8 to 64 characters and include a letter and a digit.'
+    }
     if (password !== confirmPassword) {
-      setMessage('The passwords do not match.')
-      return
+      errors.confirmPassword = 'The passwords do not match.'
     }
-
-    if (password.length < 8 || password.length > 128) {
-      setMessage('Password must be between 8 and 128 characters.')
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors)
       return
     }
 
@@ -68,11 +77,10 @@ function RegisterPage() {
       if (status === 409 || code === 'EMAIL_ALREADY_EXISTS') {
         setMessage('An account with this email already exists.')
       } else if (code === 'VALIDATION_ERROR' && fields) {
-        setMessage(
-          typeof fields === 'object'
-            ? Object.values(fields).flat().join(' ')
-            : 'Please check your details and try again.',
-        )
+        if (Array.isArray(fields)) {
+          setFieldErrors(Object.fromEntries(fields.map(({ field, message }) => [field, message])))
+        }
+        setMessage(serverMessage || 'Please check your details and try again.')
       } else if (status === 404) {
         setMessage(
           'Registration endpoint not found. Please check the backend API route.',
@@ -121,6 +129,8 @@ function RegisterPage() {
           <label htmlFor="register-name">Full name</label>
           <input
             id="register-name"
+            aria-invalid={Boolean(fieldErrors.name)}
+            aria-describedby={fieldErrors.name ? 'register-name-error' : undefined}
             type="text"
             autoComplete="name"
             value={name}
@@ -128,14 +138,23 @@ function RegisterPage() {
               setName(event.target.value)
               clearMessage()
             }}
-            maxLength={100}
+            minLength={3}
+            maxLength={60}
             required
           />
+          {fieldErrors.name && (
+            <p id="register-name-error" className="form-error" role="alert">
+              {fieldErrors.name}
+            </p>
+          )}
 
           <label htmlFor="register-email">Email address</label>
           <input
             id="register-email"
+            aria-invalid={Boolean(fieldErrors.email)}
+            aria-describedby={fieldErrors.email ? 'register-email-error' : undefined}
             type="email"
+            maxLength={100}
             autoComplete="email"
             value={email}
             onChange={(event) => {
@@ -144,11 +163,21 @@ function RegisterPage() {
             }}
             required
           />
+          {fieldErrors.email && (
+            <p id="register-email-error" className="form-error" role="alert">
+              {fieldErrors.email}
+            </p>
+          )}
 
           <label htmlFor="register-phone">Phone number (optional)</label>
           <input
             id="register-phone"
+            aria-invalid={Boolean(fieldErrors.phone)}
+            aria-describedby={fieldErrors.phone ? 'register-phone-error' : undefined}
             type="tel"
+            inputMode="numeric"
+            maxLength={10}
+            pattern="[0-9]{10}"
             autoComplete="tel"
             value={phone}
             onChange={(event) => {
@@ -156,10 +185,17 @@ function RegisterPage() {
               clearMessage()
             }}
           />
+          {fieldErrors.phone && (
+            <p id="register-phone-error" className="form-error" role="alert">
+              {fieldErrors.phone}
+            </p>
+          )}
 
           <label htmlFor="register-password">Password</label>
           <input
             id="register-password"
+            aria-invalid={Boolean(fieldErrors.password)}
+            aria-describedby={fieldErrors.password ? 'register-password-error' : undefined}
             type="password"
             autoComplete="new-password"
             value={password}
@@ -168,15 +204,22 @@ function RegisterPage() {
               clearMessage()
             }}
             minLength={8}
-            maxLength={128}
+            maxLength={64}
             required
           />
+          {fieldErrors.password && (
+            <p id="register-password-error" className="form-error" role="alert">
+              {fieldErrors.password}
+            </p>
+          )}
 
           <label htmlFor="register-confirm-password">
             Confirm password
           </label>
           <input
             id="register-confirm-password"
+            aria-invalid={Boolean(fieldErrors.confirmPassword)}
+            aria-describedby={fieldErrors.confirmPassword ? 'register-confirm-password-error' : undefined}
             type="password"
             autoComplete="new-password"
             value={confirmPassword}
@@ -185,9 +228,14 @@ function RegisterPage() {
               clearMessage()
             }}
             minLength={8}
-            maxLength={128}
+            maxLength={64}
             required
           />
+          {fieldErrors.confirmPassword && (
+            <p id="register-confirm-password-error" className="form-error" role="alert">
+              {fieldErrors.confirmPassword}
+            </p>
+          )}
 
           {message && (
             <p

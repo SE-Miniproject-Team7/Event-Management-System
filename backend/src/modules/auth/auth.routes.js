@@ -1,4 +1,4 @@
-﻿
+
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const User = require('../../models/User');
@@ -21,45 +21,35 @@ function publicUser(user) {
 
 // Validate registration input.
 function validateRegistration({ name, email, phone, password }) {
-  if (!name || name.length > 100) {
-    throw new AppError(
-      400,
-      'VALIDATION_ERROR',
-      'Name is required and must not exceed 100 characters.'
-    );
+  const fields = [];
+
+  if (name.length < 3 || name.length > 60) {
+    fields.push({ field: 'name', message: 'Name must be between 3 and 60 characters.' });
   }
 
-  if (
-    !email ||
-    email.length > 254 ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  ) {
-    throw new AppError(
-      400,
-      'VALIDATION_ERROR',
-      'Please provide a valid email address.'
-    );
+  if (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    fields.push({ field: 'email', message: 'Enter a valid email address of at most 100 characters.' });
   }
 
-  if (password.length < 8 || password.length > 128) {
-    throw new AppError(
-      400,
-      'VALIDATION_ERROR',
-      'Password must be between 8 and 128 characters.'
-    );
+  if (password.length < 8 || password.length > 64 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+    fields.push({ field: 'password', message: 'Password must be 8 to 64 characters and include a letter and a digit.' });
   }
 
-  if (phone && phone.length > 30) {
-    throw new AppError(
-      400,
-      'VALIDATION_ERROR',
-      'Phone number must not exceed 30 characters.'
-    );
+  if (typeof phone !== 'string' || (phone !== '' && !/^[0-9]{10}$/.test(phone))) {
+    fields.push({ field: 'phone', message: 'Phone number must contain exactly 10 digits.' });
+  }
+
+  if (fields.length) {
+    throw new AppError(422, 'VALIDATION_ERROR', 'Please check your details.', fields);
   }
 }
 
 // Register a new attendee.
 router.post('/register', asyncHandler(async (req, res) => {
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    throw new AppError(422, 'VALIDATION_ERROR', 'Request body must be a JSON object.');
+  }
+
   const name = typeof req.body?.name === 'string'
     ? req.body.name.trim()
     : '';
@@ -70,7 +60,7 @@ router.post('/register', asyncHandler(async (req, res) => {
 
   const phone = typeof req.body?.phone === 'string'
     ? req.body.phone.trim()
-    : '';
+    : req.body.phone === undefined ? '' : req.body.phone;
 
   const password = typeof req.body?.password === 'string'
     ? req.body.password
@@ -102,10 +92,7 @@ router.post('/register', asyncHandler(async (req, res) => {
       lockUntil: null,
     });
 
-    return res.status(201).json({
-      message: 'Account created successfully. You can now sign in.',
-      user: publicUser(user),
-    });
+    return res.status(201).json(publicUser(user));
   } catch (error) {
     // Handle simultaneous registrations with the same email.
     if (error.code === 11000) {
