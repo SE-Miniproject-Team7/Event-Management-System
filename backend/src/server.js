@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const app = require('./app');
 
 const PORT = process.env.PORT || 5000;
+
+// # CHANGED: Start the API only after MongoDB connects successfully.
 mongoose.connect(process.env.MONGO_URI).then(() => {
   console.log('MongoDB connected');
   app.listen(PORT, () => console.log(`API on http://localhost:${PORT}`));
