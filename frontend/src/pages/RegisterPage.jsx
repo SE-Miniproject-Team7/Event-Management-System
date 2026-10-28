@@ -1,4 +1,4 @@
-﻿
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -95,9 +95,7 @@ function RegisterPage() {
   return (
     <section className="auth-card">
       <p className="eyebrow">JOIN EMS</p>
-
       <h1>Create an account</h1>
-
       <p className="auth-description">
         Create your attendee account to get started.
       </p>
@@ -107,7 +105,6 @@ function RegisterPage() {
           <p className="form-success" role="status">
             {message}
           </p>
-
           <button
             className="auth-submit"
             type="button"
@@ -190,10 +187,7 @@ function RegisterPage() {
           />
 
           {message && (
-            <p
-              className="form-error"
-              role="alert"
-            >
+            <p className="form-error" role="alert">
               {message}
             </p>
           )}

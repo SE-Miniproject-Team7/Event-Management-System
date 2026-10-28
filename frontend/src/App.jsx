@@ -63,7 +63,9 @@ function App() {
           {!checkingAuth && !user && (
             <>
               <Link to="/login">Sign in</Link>
-              <Link to="/register">Register</Link>
+              <Link className="nav-register" to="/register">
+                Register
+              </Link>
             </>
           )}
 

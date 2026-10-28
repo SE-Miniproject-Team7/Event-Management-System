@@ -21,12 +21,10 @@ function publicUser(user) {
 
 // Validate registration input.
 function validateRegistration({ name, email, phone, password }) {
+  const fields = {};
+
   if (!name || name.length > 100) {
-    throw new AppError(
-      400,
-      'VALIDATION_ERROR',
-      'Name is required and must not exceed 100 characters.'
-    );
+    fields.name = 'Name is required and must be at most 100 characters.';
   }
 
   if (
@@ -34,26 +32,23 @@ function validateRegistration({ name, email, phone, password }) {
     email.length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   ) {
-    throw new AppError(
-      400,
-      'VALIDATION_ERROR',
-      'Please provide a valid email address.'
-    );
+    fields.email = 'Enter a valid email address.';
   }
 
   if (password.length < 8 || password.length > 128) {
-    throw new AppError(
-      400,
-      'VALIDATION_ERROR',
-      'Password must be between 8 and 128 characters.'
-    );
+    fields.password = 'Password must be between 8 and 128 characters.';
   }
 
   if (phone && phone.length > 30) {
+    fields.phone = 'Phone number must be at most 30 characters.';
+  }
+
+  if (Object.keys(fields).length > 0) {
     throw new AppError(
       400,
       'VALIDATION_ERROR',
-      'Phone number must not exceed 30 characters.'
+      'Please check your details.',
+      fields
     );
   }
 }
@@ -107,7 +102,6 @@ router.post('/register', asyncHandler(async (req, res) => {
       user: publicUser(user),
     });
   } catch (error) {
-    // Handle simultaneous registrations with the same email.
     if (error.code === 11000) {
       throw new AppError(
         409,
