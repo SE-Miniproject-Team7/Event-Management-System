@@ -1,11 +1,63 @@
 const router = require('express').Router();
 const mongoose = require('mongoose');
 const Category = require('../../models/Category');
+const User = require('../../models/User');
 const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
 
 router.use(authenticate, requireRole('Admin'));
+
+// Manage account activity and roles (EMS-F-031 / TC-ADM-01).
+router.patch('/users/:id', asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    throw new AppError(404, 'NOT_FOUND', 'User not found');
+  }
+
+  const body = req.body;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new AppError(422, 'VALIDATION_ERROR', 'Request body must be a JSON object');
+  }
+
+  const fields = [];
+  const changes = {};
+  for (const field of Object.keys(body)) {
+    if (field !== 'active' && field !== 'role') {
+      fields.push({ field, message: 'Only active and role can be updated' });
+    }
+  }
+  if (!Object.hasOwn(body, 'active') && !Object.hasOwn(body, 'role')) {
+    fields.push({ field: 'body', message: 'Provide active or role to update' });
+  }
+  if (Object.hasOwn(body, 'active')) {
+    if (typeof body.active !== 'boolean') {
+      fields.push({ field: 'active', message: 'active must be true or false' });
+    } else {
+      changes.active = body.active;
+    }
+  }
+  if (Object.hasOwn(body, 'role')) {
+    if (!['Attendee', 'Organizer', 'Admin'].includes(body.role)) {
+      fields.push({ field: 'role', message: 'Role must be Attendee, Organizer or Admin' });
+    } else {
+      changes.role = body.role;
+    }
+  }
+  if (fields.length) {
+    throw new AppError(422, 'VALIDATION_ERROR', 'Invalid user update', fields);
+  }
+
+  // Update only the supplied fields, atomically, without saving a stale user copy.
+  const user = await User.findByIdAndUpdate(
+    req.params.id, { $set: changes }, { returnDocument: 'after', runValidators: true }
+  );
+  if (!user) throw new AppError(404, 'NOT_FOUND', 'User not found');
+
+  res.json({ user: {
+    id: String(user._id), name: user.name, email: user.email,
+    role: user.role, active: user.active,
+  } });
+}));
 
 // Manage categories (EMS-F-032)
 router.get('/categories', asyncHandler(async (req, res) => {
