@@ -94,7 +94,6 @@ router.post('/register', asyncHandler(async (req, res) => {
 
     return res.status(201).json(publicUser(user));
   } catch (error) {
-    // Handle simultaneous registrations with the same email.
     if (error.code === 11000) {
       throw new AppError(
         409,

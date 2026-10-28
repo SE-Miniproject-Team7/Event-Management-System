@@ -9,12 +9,9 @@ function LoginPage({ onLoginSuccess }) {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-
-  function clearMessage() {
-    setMessage('')
-  }
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -42,10 +39,8 @@ function LoginPage({ onLoginSuccess }) {
         return
       }
 
-      // Update the user state in App.jsx.
       onLoginSuccess?.(loggedInUser)
 
-      // Return to a valid local destination, or go home.
       const requestedPath = location.state?.from
       const destination =
         typeof requestedPath === 'string' &&
@@ -59,18 +54,17 @@ function LoginPage({ onLoginSuccess }) {
       const status = err.response?.status
       const errorData = err.response?.data?.error
       const code = errorData?.code
-      const serverMessage = errorData?.message
+      const serverMessage =
+        errorData?.message || err.response?.data?.message
 
       if (!err.response) {
-        setMessage(
-          'Cannot connect to the server. Make sure the backend is running on port 5000.',
-        )
+        setMessage('Cannot connect to the server. Make sure the backend is running.')
       } else if (status === 401 || code === 'INVALID_CREDENTIALS') {
         setMessage('Incorrect email or password. Please try again.')
       } else if (status === 423 || code === 'ACCOUNT_LOCKED') {
         setMessage(
           serverMessage ||
-            'Your account is temporarily locked. Please try again later.',
+            'Your account is temporarily locked. Please try again later.'
         )
       } else if (status === 404) {
         setMessage('Login endpoint not found. Please check the backend API route.')
@@ -85,9 +79,7 @@ function LoginPage({ onLoginSuccess }) {
   return (
     <section className="auth-card">
       <p className="eyebrow">WELCOME BACK</p>
-
       <h1>Sign in</h1>
-
       <p className="auth-description">
         Sign in to your Event Management System account.
       </p>
@@ -101,23 +93,35 @@ function LoginPage({ onLoginSuccess }) {
           value={email}
           onChange={(event) => {
             setEmail(event.target.value)
-            clearMessage()
+            setMessage('')
           }}
+          placeholder="you@example.com"
           required
         />
 
         <label htmlFor="login-password">Password</label>
-        <input
-          id="login-password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value)
-            clearMessage()
-          }}
-          required
-        />
+        <div className="password-field">
+          <input
+            id="login-password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value)
+              setMessage('')
+            }}
+            placeholder="Enter your password"
+            required
+          />
+          <button
+            className="password-toggle"
+            type="button"
+            onClick={() => setShowPassword((visible) => !visible)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {showPassword ? 'Hide' : 'Show'}
+          </button>
+        </div>
 
         {message && (
           <p className="form-error" role="alert">
@@ -125,11 +129,7 @@ function LoginPage({ onLoginSuccess }) {
           </p>
         )}
 
-        <button
-          className="auth-submit"
-          type="submit"
-          disabled={loading}
-        >
+        <button className="auth-submit" type="submit" disabled={loading}>
           {loading ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
