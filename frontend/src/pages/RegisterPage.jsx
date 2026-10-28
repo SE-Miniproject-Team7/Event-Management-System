@@ -5,6 +5,7 @@ import api from '../services/api'
 
 function RegisterPage() {
   const navigate = useNavigate()
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -14,15 +15,23 @@ function RegisterPage() {
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  function handleChange() {
+  function clearMessage() {
     setMessage('')
     setSuccess(false)
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
-    setMessage('')
-    setSuccess(false)
+    clearMessage()
+
+    const cleanName = name.trim()
+    const cleanEmail = email.trim().toLowerCase()
+    const cleanPhone = phone.trim()
+
+    if (!cleanName) {
+      setMessage('Please enter your full name.')
+      return
+    }
 
     if (password !== confirmPassword) {
       setMessage('The passwords do not match.')
@@ -38,9 +47,9 @@ function RegisterPage() {
 
     try {
       const response = await api.post('/auth/register', {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        phone: phone.trim(),
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
         password,
       })
 
@@ -51,17 +60,31 @@ function RegisterPage() {
       )
     } catch (err) {
       const status = err.response?.status
-      const code = err.response?.data?.error?.code
-      const fields = err.response?.data?.error?.fields
-      const serverMessage = err.response?.data?.error?.message
+      const errorData = err.response?.data?.error
+      const code = errorData?.code
+      const fields = errorData?.fields
+      const serverMessage = errorData?.message
 
       if (status === 409 || code === 'EMAIL_ALREADY_EXISTS') {
         setMessage('An account with this email already exists.')
       } else if (code === 'VALIDATION_ERROR' && fields) {
-        setMessage(Object.values(fields).join(' '))
+        setMessage(
+          typeof fields === 'object'
+            ? Object.values(fields).flat().join(' ')
+            : 'Please check your details and try again.',
+        )
+      } else if (status === 404) {
+        setMessage(
+          'Registration endpoint not found. Please check the backend API route.',
+        )
+      } else if (!err.response) {
+        setMessage(
+          'Cannot connect to the server. Make sure the backend is running on port 5000.',
+        )
       } else {
         setMessage(
-          serverMessage || 'Unable to create your account. Please try again.',
+          serverMessage ||
+            'Unable to create your account. Please try again.',
         )
       }
     } finally {
@@ -100,7 +123,7 @@ function RegisterPage() {
             value={name}
             onChange={(event) => {
               setName(event.target.value)
-              handleChange()
+              clearMessage()
             }}
             maxLength={100}
             required
@@ -114,7 +137,7 @@ function RegisterPage() {
             value={email}
             onChange={(event) => {
               setEmail(event.target.value)
-              handleChange()
+              clearMessage()
             }}
             required
           />
@@ -127,7 +150,7 @@ function RegisterPage() {
             value={phone}
             onChange={(event) => {
               setPhone(event.target.value)
-              handleChange()
+              clearMessage()
             }}
           />
 
@@ -139,14 +162,16 @@ function RegisterPage() {
             value={password}
             onChange={(event) => {
               setPassword(event.target.value)
-              handleChange()
+              clearMessage()
             }}
             minLength={8}
             maxLength={128}
             required
           />
 
-          <label htmlFor="register-confirm-password">Confirm password</label>
+          <label htmlFor="register-confirm-password">
+            Confirm password
+          </label>
           <input
             id="register-confirm-password"
             type="password"
@@ -154,7 +179,7 @@ function RegisterPage() {
             value={confirmPassword}
             onChange={(event) => {
               setConfirmPassword(event.target.value)
-              handleChange()
+              clearMessage()
             }}
             minLength={8}
             maxLength={128}
@@ -167,8 +192,12 @@ function RegisterPage() {
             </p>
           )}
 
-          <button className="auth-submit" type="submit" disabled={loading}>
-            {loading ? 'Creating account…' : 'Create account'}
+          <button
+            className="auth-submit"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
       )}

@@ -1,47 +1,75 @@
-
+﻿
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 
-function LoginPage() {
+function LoginPage({ onLoginSuccess }) {
   const navigate = useNavigate()
+  const location = useLocation()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(event) {
     event.preventDefault()
-    setError('')
+    setMessage('')
 
-    const normalizedEmail = email.trim()
+    const cleanEmail = email.trim().toLowerCase()
 
-    if (!normalizedEmail || !password) {
-      setError('Please enter your email and password.')
+    if (!cleanEmail || !password) {
+      setMessage('Please enter your email address and password.')
       return
     }
 
     setLoading(true)
 
     try {
-      await api.post('/auth/login', {
-        email: normalizedEmail,
+      const response = await api.post('/auth/login', {
+        email: cleanEmail,
         password,
       })
 
-      navigate('/', { replace: true })
+      const loggedInUser = response.data?.user
+
+      if (!loggedInUser) {
+        setMessage('Login response was unexpected. Please try again.')
+        return
+      }
+
+      onLoginSuccess?.(loggedInUser)
+
+      const requestedPath = location.state?.from
+      const destination =
+        typeof requestedPath === 'string' &&
+        requestedPath.startsWith('/') &&
+        !requestedPath.startsWith('//')
+          ? requestedPath
+          : '/'
+
+      navigate(destination, { replace: true })
     } catch (err) {
       const status = err.response?.status
-      const code = err.response?.data?.error?.code
-      const message = err.response?.data?.message
+      const errorData = err.response?.data?.error
+      const code = errorData?.code
+      const serverMessage =
+        errorData?.message || err.response?.data?.message
 
-      if (status === 423 || code === 'ACCOUNT_LOCKED') {
-        setError(message || 'Your account is temporarily locked. Please try again later.')
-      } else if (status === 401) {
-        setError('Email or password is incorrect.')
+      if (!err.response) {
+        setMessage('Cannot connect to the server. Make sure the backend is running.')
+      } else if (status === 401 || code === 'INVALID_CREDENTIALS') {
+        setMessage('Incorrect email or password. Please try again.')
+      } else if (status === 423 || code === 'ACCOUNT_LOCKED') {
+        setMessage(
+          serverMessage ||
+            'Your account is temporarily locked. Please try again later.'
+        )
+      } else if (status === 404) {
+        setMessage('Login endpoint not found. Please check the backend API route.')
       } else {
-        setError(message || 'Unable to sign in. Check your connection and try again.')
+        setMessage(serverMessage || 'Unable to sign in. Please try again.')
       }
     } finally {
       setLoading(false)
@@ -53,7 +81,7 @@ function LoginPage() {
       <p className="eyebrow">WELCOME BACK</p>
       <h1>Sign in</h1>
       <p className="auth-description">
-        Sign in to continue to Event Management System.
+        Sign in to your Event Management System account.
       </p>
 
       <form className="auth-form" onSubmit={handleSubmit}>
@@ -63,7 +91,10 @@ function LoginPage() {
           type="email"
           autoComplete="email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => {
+            setEmail(event.target.value)
+            setMessage('')
+          }}
           placeholder="you@example.com"
           required
         />
@@ -75,7 +106,10 @@ function LoginPage() {
             type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              setPassword(event.target.value)
+              setMessage('')
+            }}
             placeholder="Enter your password"
             required
           />
@@ -89,19 +123,19 @@ function LoginPage() {
           </button>
         </div>
 
-        {error && (
+        {message && (
           <p className="form-error" role="alert">
-            {error}
+            {message}
           </p>
         )}
 
         <button className="auth-submit" type="submit" disabled={loading}>
-          {loading ? 'Signing in…' : 'Sign in'}
+          {loading ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
 
       <p className="auth-switch">
-        Don't have an account? <Link to="/register">Create one</Link>
+        Don't have an account? <Link to="/register">Register</Link>
       </p>
     </section>
   )
