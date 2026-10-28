@@ -1,9 +1,11 @@
-
+﻿
 import { useEffect, useState } from 'react'
 import { Link, Route, Routes, useNavigate } from 'react-router-dom'
 import HomePage from './pages/HomePage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
+import EventsPage from './pages/EventsPage.jsx'
+import EventDetailsPage from './pages/EventDetailsPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import api from './services/api'
 import './App.css'
@@ -19,7 +21,7 @@ function App() {
 
     api.get('/auth/me')
       .then((response) => {
-        if (active) setUser(response.data.user)
+        if (active) setUser(response.data?.user ?? null)
       })
       .catch(() => {
         if (active) setUser(null)
@@ -54,8 +56,9 @@ function App() {
           Event Management System
         </Link>
 
-        <nav className="app-nav">
+        <nav className="app-nav" aria-label="Main navigation">
           <Link to="/">Home</Link>
+          <Link to="/events">Explore Events</Link>
 
           {!checkingAuth && !user && (
             <>
@@ -64,7 +67,7 @@ function App() {
             </>
           )}
 
-          {user && (
+          {!checkingAuth && user && (
             <>
               <span className="user-greeting">
                 Hi, {user.name}
@@ -89,11 +92,14 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route
             path="/login"
-            element={
-              <LoginPage onLoginSuccess={setUser} />
-            }
+            element={<LoginPage onLoginSuccess={setUser} />}
           />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route
+            path="/events/:id"
+            element={<EventDetailsPage />}
+          />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
