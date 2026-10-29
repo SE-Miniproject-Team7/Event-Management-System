@@ -74,12 +74,29 @@ router.get('/pending', authenticate, requireRole('Admin'), asyncHandler(async (r
   res.json({ items });
 }));
 
+
+
 router.get('/:id', asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) throw notFound();
-  const event = await Event.findOne({ _id: req.params.id, status: 'Published' });
+
+  const event = await Event.findOne({
+    _id: req.params.id,
+    status: 'Published',
+  });
+
   if (!event) throw notFound();
-  res.json({ event, remainingSeats: event.capacity - event.seatsTaken });
+
+  // # CHANGED: Calculate remaining seats using the shared helper.
+  const eventWithRemaining = withRemaining(event);
+
+  // # CHANGED: Preserve the existing API response contract.
+  res.json({
+    event,
+    remainingSeats: eventWithRemaining.remainingSeats,
+  });
 }));
+
+
 
 // Admin approves or rejects (EMS-F-010)
 router.patch('/:id/approval', authenticate, requireRole('Admin'), asyncHandler(async (req, res) => {
