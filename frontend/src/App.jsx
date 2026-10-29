@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import { Link, Route, Routes, useNavigate } from 'react-router-dom'
 import HomePage from './pages/HomePage.jsx'
+import CreateEventPage from './pages/CreateEventPage.jsx'
+import PendingEventsPage from './pages/PendingEventsPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import EventsPage from './pages/EventsPage.jsx'
@@ -59,6 +61,8 @@ function App() {
         <nav className="app-nav" aria-label="Main navigation">
           <Link to="/">Home</Link>
           <Link to="/events">Explore Events</Link>
+          <Link to="/organizer/events/new">Create Event</Link>
+          <Link to="/admin/events/pending">Admin Approvals</Link>
 
           {!checkingAuth && !user && (
             <>
@@ -71,9 +75,7 @@ function App() {
 
           {!checkingAuth && user && (
             <>
-              <span className="user-greeting">
-                Hi, {user.name}
-              </span>
+              <span className="user-greeting">Hi, {user.name}</span>
               <button
                 type="button"
                 className="logout-button"
@@ -93,15 +95,20 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route
+            path="/organizer/events/new"
+            element={<CreateEventPage />}
+          />
+          <Route
+            path="/admin/events/pending"
+            element={<PendingEventsPage />}
+          />
+          <Route
             path="/login"
             element={<LoginPage onLoginSuccess={setUser} />}
           />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/events" element={<EventsPage />} />
-          <Route
-            path="/events/:id"
-            element={<EventDetailsPage />}
-          />
+          <Route path="/events/:id" element={<EventDetailsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
