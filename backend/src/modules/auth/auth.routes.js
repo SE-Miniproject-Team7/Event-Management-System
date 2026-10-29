@@ -1,4 +1,4 @@
-﻿
+
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const User = require('../../models/User');
@@ -7,8 +7,7 @@ const asyncHandler = require('../../utils/asyncHandler');
 const { authenticate } = require('../../middleware/auth');
 const { setAuthCookie, clearAuthCookie } = require('../../utils/token');
 
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCK_DURATION_MS = 15 * 60 * 1000;
+const { checkLock, recordLoginAttempt } = require('./lockout');
 
 // Return only public account details.
 function publicUser(user) {
@@ -114,24 +113,6 @@ router.post('/register', asyncHandler(async (req, res) => {
   }
 }));
 
-function createAccountLockedError(lockUntil) {
-  const retryAfterSeconds = Math.max(
-    1,
-    Math.ceil((new Date(lockUntil).getTime() - Date.now()) / 1000)
-  );
-
-  const minutes = Math.ceil(retryAfterSeconds / 60);
-
-  const error = new AppError(
-    423,
-    'ACCOUNT_LOCKED',
-    `Try again in ${minutes} minute${minutes === 1 ? '' : 's'}`
-  );
-
-  error.retryAfterSeconds = retryAfterSeconds;
-  return error;
-}
-
 // Log in an existing user.
 router.post('/login', asyncHandler(async (req, res) => {
   const email = typeof req.body?.email === 'string'
@@ -150,62 +131,24 @@ router.post('/login', asyncHandler(async (req, res) => {
     );
   }
 
-  const user = await User.findOne({ email });
+  let user = await User.findOne({ email });
 
-  if (!user) {
-    throw new AppError(
-      401,
-      'INVALID_CREDENTIALS',
-      'Email or password is incorrect'
-    );
+  if (!user || !user.active) {
+    throw new AppError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
   }
 
-  if (user.lockUntil && user.lockUntil > new Date()) {
-    throw createAccountLockedError(user.lockUntil);
-  }
-
-  if (user.lockUntil && user.lockUntil <= new Date()) {
-    user.failedLogins = 0;
-    user.lockUntil = null;
-  }
+  checkLock(user);
 
   const validPassword = await bcrypt.compare(
     password,
     user.passwordHash
   );
 
+  user = await recordLoginAttempt(user, validPassword);
+
   if (!validPassword) {
-    user.failedLogins = (user.failedLogins || 0) + 1;
-
-    if (user.failedLogins >= MAX_FAILED_ATTEMPTS) {
-      user.failedLogins = 0;
-      user.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
-    }
-
-    await user.save();
-
-    if (user.lockUntil) {
-      throw createAccountLockedError(user.lockUntil);
-    }
-
-    throw new AppError(
-      401,
-      'INVALID_CREDENTIALS',
-      'Email or password is incorrect'
-    );
+    throw new AppError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
   }
-
-  if (!user.active) {
-    throw new AppError(
-      401,
-      'INVALID_CREDENTIALS',
-      'Email or password is incorrect'
-    );
-  }
-
-  user.failedLogins = 0;
-  user.lockUntil = null;
-  await user.save();
 
   setAuthCookie(res, user);
 

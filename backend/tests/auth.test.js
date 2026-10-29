@@ -52,6 +52,10 @@ describe('Authentication', () => {
 
     User.findOne = jest.fn().mockResolvedValue(user);
     User.findById = jest.fn().mockResolvedValue(user);
+    User.findOneAndUpdate = jest.fn().mockImplementation(async (filter, update) => {
+      Object.assign(user, update.$set);
+      return user;
+    });
   });
 
   test('successful login returns user details and sets secure JWT cookie', async () => {
@@ -148,7 +152,8 @@ describe('Authentication', () => {
     expect(user.lockUntil.getTime()).toBeLessThanOrEqual(
       Date.now() + 15 * 60 * 1000
     );
-    expect(user.save).toHaveBeenCalled();
+    expect(User.findOneAndUpdate).toHaveBeenCalled();
+    expect(user.save).not.toHaveBeenCalled();
   });
 
   test('already locked account returns the remaining lockout time', async () => {
@@ -181,6 +186,56 @@ describe('Authentication', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.error.code).toBe('INVALID_CREDENTIALS');
+  });
+
+  test('an expired lock starts a new failed-attempt count', async () => {
+    user.lockUntil = new Date(Date.now() - 1000);
+    user.failedLogins = 4;
+    const response = await request(app).post('/api/auth/login').send({ email: user.email, password: 'Wrong123' });
+    expect(response.status).toBe(401);
+    expect(user.failedLogins).toBe(1);
+    expect(user.lockUntil).toBeNull();
+  });
+
+  test('successful login resets previous failures', async () => {
+    user.failedLogins = 3;
+    const response = await request(app).post('/api/auth/login').send({ email: user.email, password: 'Correct123!' });
+    expect(response.status).toBe(200);
+    expect(user.failedLogins).toBe(0);
+    expect(user.lockUntil).toBeNull();
+  });
+
+  test('a concurrent lock cannot be cleared by a correct password', async () => {
+    User.findOneAndUpdate.mockResolvedValueOnce(null);
+    User.findById.mockResolvedValueOnce({ ...user, lockUntil: new Date(Date.now() + 900000) });
+    const response = await request(app).post('/api/auth/login').send({ email: user.email, password: 'Correct123!' });
+    expect(response.status).toBe(423);
+    expect(response.headers['set-cookie']).toBeUndefined();
+    expect(User.findOneAndUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    ['deactivation', { active: false }],
+    ['password change', { passwordHash: 'different-hash' }],
+  ])('rejects login after concurrent %s', async (label, changes) => {
+    User.findOneAndUpdate.mockResolvedValueOnce(null);
+    User.findById.mockResolvedValueOnce({ ...user, ...changes });
+    const response = await request(app).post('/api/auth/login').send({ email: user.email, password: 'Correct123!' });
+    expect(response.status).toBe(401);
+    expect(response.headers['set-cookie']).toBeUndefined();
+  });
+
+  test('a conflicting failed attempt reloads the current count before retrying', async () => {
+    const current = { ...user, failedLogins: 2 };
+    User.findOneAndUpdate.mockResolvedValueOnce(null).mockImplementationOnce(async (filter, update) => ({ ...current, ...update.$set }));
+    User.findById.mockResolvedValueOnce(current);
+    const response = await request(app).post('/api/auth/login').send({ email: user.email, password: 'Wrong123' });
+    expect(response.status).toBe(401);
+    expect(User.findOneAndUpdate).toHaveBeenNthCalledWith(2,
+      expect.objectContaining({ $expr: { $eq: [{ $ifNull: ['$failedLogins', 0] }, 2] } }),
+      { $set: { failedLogins: 3, lockUntil: null } },
+      { returnDocument: 'after' }
+    );
   });
 
   test('request without a token is rejected', async () => {
