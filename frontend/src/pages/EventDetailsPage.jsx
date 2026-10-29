@@ -73,7 +73,7 @@ function EventDetailsPage() {
         'Registration failed. Please try again.'
 
       if (status === 401) {
-        navigate('/auth/login')
+        navigate('/login', { state: { from: `/events/${id}` } })
         return
       }
 
