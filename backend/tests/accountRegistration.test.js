@@ -125,6 +125,7 @@ describe('Account registration (TC-AUTH-01, TC-AUTH-02, TC-SEC-01)', () => {
     expect(signup.status).toBe(201);
 
     User.findOne.mockResolvedValue(storedUser);
+    User.findOneAndUpdate.mockImplementation(async (_filter, update) => Object.assign(storedUser, update.$set));
     User.findById.mockResolvedValue(storedUser);
     const login = await request(app).post('/api/auth/login').send({ email: valid.email, password: valid.password });
     expect(login.status).toBe(200);

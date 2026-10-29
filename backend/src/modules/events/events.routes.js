@@ -10,15 +10,16 @@ const AppError = require('../../utils/AppError');
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const withRemaining = (e) => ({ ...e.toObject(), remainingSeats: e.capacity - e.seatsTaken });
 const notFound = () => new AppError(404, 'NOT_FOUND', 'Event not found');
+const parseDate = (value) => typeof value === 'string' && value.trim() ? new Date(value) : new Date(NaN);
 
 // Create event (Organizer) -> status Pending Approval (EMS-F-007/008/009)
 router.post('/', authenticate, requireRole('Organizer'), asyncHandler(async (req, res) => {
   const b = req.body || {};
   const fields = [];
-  const start = new Date(b.startAt), end = new Date(b.endAt), deadline = new Date(b.registrationDeadline);
-  if (typeof b.title !== 'string' || b.title.trim().length < 3) fields.push({ field: 'title', message: 'Title is required (min 3 characters)' });
-  if (typeof b.description !== 'string' || !b.description.trim()) fields.push({ field: 'description', message: 'Description is required' });
-  if (typeof b.venue !== 'string' || !b.venue.trim()) fields.push({ field: 'venue', message: 'Venue is required' });
+  const start = parseDate(b.startAt), end = parseDate(b.endAt), deadline = parseDate(b.registrationDeadline);
+  if (typeof b.title !== 'string' || b.title.trim().length < 3 || b.title.trim().length > 100) fields.push({ field: 'title', message: 'Title must be 3 to 100 characters' });
+  if (typeof b.description !== 'string' || !b.description.trim() || b.description.trim().length > 2000) fields.push({ field: 'description', message: 'Description is required (max 2000 characters)' });
+  if (typeof b.venue !== 'string' || !b.venue.trim() || b.venue.trim().length > 100) fields.push({ field: 'venue', message: 'Venue is required (max 100 characters)' });
   if (isNaN(start)) fields.push({ field: 'startAt', message: 'Valid start date required' });
   if (isNaN(end) || end <= start) fields.push({ field: 'endAt', message: 'End must be after start' });
   if (isNaN(deadline) || deadline > start) fields.push({ field: 'registrationDeadline', message: 'Deadline must be on or before the start' });
