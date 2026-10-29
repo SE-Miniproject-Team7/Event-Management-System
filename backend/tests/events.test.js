@@ -106,6 +106,16 @@ describe('create event (TC-EVT-01, TC-EVT-02)', () => {
   test.each([
     ['venue', { venue: '' }],
     ['title', { title: 'ab' }],
+    ['title', { title: 'x'.repeat(101) }],
+    ['description', { description: 'x'.repeat(2001) }],
+    ['venue', { venue: 'x'.repeat(101) }],
+    ['startAt', { startAt: null }],
+    ['startAt', { startAt: 0 }],
+    ['startAt', { startAt: [] }],
+    ['endAt', { endAt: null }],
+    ['endAt', { endAt: false }],
+    ['registrationDeadline', { registrationDeadline: null }],
+    ['registrationDeadline', { registrationDeadline: {} }],
     ['endAt', { endAt: iso(10, -1) }],
     ['registrationDeadline', { registrationDeadline: iso(11) }],
     ['capacity', { capacity: 0 }],
@@ -118,6 +128,17 @@ describe('create event (TC-EVT-01, TC-EVT-02)', () => {
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
     expect(res.body.error.fields.map((f) => f.field)).toContain(field);
     expect(Event.create).not.toHaveBeenCalled();
+  });
+
+  test('accepts maximum text lengths and trims the stored values', async () => {
+    const { cookie } = loginAs('Organizer');
+    const res = await request(app).post('/api/events').set('Cookie', cookie).send(validBody({
+      title: '  ' + 'T'.repeat(100) + '  ', description: 'D'.repeat(2000), venue: 'V'.repeat(100),
+    }));
+    expect(res.status).toBe(201);
+    expect(Event.create).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'T'.repeat(100), description: 'D'.repeat(2000), venue: 'V'.repeat(100),
+    }));
   });
 
   test('rejects an unknown or inactive category', async () => {

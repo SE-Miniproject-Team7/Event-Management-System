@@ -70,8 +70,8 @@ function CreateEventPage() {
     const deadline = new Date(form.registrationDeadline)
     const capacity = Number(form.capacity)
 
-    if (form.title.trim().length < 3) {
-      setError('Event title must contain at least 3 characters.')
+    if (form.title.trim().length < 3 || form.title.trim().length > 100) {
+      setError('Event title must be 3 to 100 characters.')
       return
     }
 
@@ -81,6 +81,15 @@ function CreateEventPage() {
       !form.categoryId
     ) {
       setError('Please complete all required fields.')
+      return
+    }
+
+    if (form.description.trim().length > 2000) {
+      setError('Description must not exceed 2000 characters.')
+      return
+    }
+    if (form.venue.trim().length > 100) {
+      setError('Venue must not exceed 100 characters.')
       return
     }
 
@@ -177,7 +186,7 @@ function CreateEventPage() {
             value={form.title}
             onChange={handleChange}
             minLength={3}
-            maxLength={150}
+            maxLength={100}
             required
             placeholder="e.g. Campus Tech Meetup"
           />
@@ -187,6 +196,7 @@ function CreateEventPage() {
           Description
           <textarea
             name="description"
+            maxLength={2000}
             value={form.description}
             onChange={handleChange}
             rows={4}
@@ -199,6 +209,7 @@ function CreateEventPage() {
           Venue
           <input
             name="venue"
+            maxLength={100}
             value={form.venue}
             onChange={handleChange}
             required
