@@ -54,7 +54,8 @@ router.get('/', asyncHandler(async (req, res) => {
   }
   // # CHANGED: Treat YYYY-MM-DD filters as inclusive calendar dates.
   if (typeof req.query.from === 'string') {
-    const d = new Date(req.query.from);
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(req.query.from);
+    const d = new Date(dateOnly ? `${req.query.from}T00:00:00+05:30` : req.query.from);
     if (!isNaN(d)) {
       and.push({ startAt: { $gte: d } });
     }
@@ -66,8 +67,9 @@ router.get('/', asyncHandler(async (req, res) => {
     if (!isNaN(d)) {
       // # CHANGED: Include the entire end date for date-only query values.
       if (/^\d{4}-\d{2}-\d{2}$/.test(req.query.to)) {
-        d.setUTCDate(d.getUTCDate() + 1);
-        and.push({ startAt: { $lt: d } });
+        const end = new Date(`${req.query.to}T00:00:00+05:30`);
+        end.setUTCDate(end.getUTCDate() + 1);
+        and.push({ startAt: { $lt: end } });
       } else {
         // Preserve exact timestamp behavior for timestamp query values.
         and.push({ startAt: { $lte: d } });

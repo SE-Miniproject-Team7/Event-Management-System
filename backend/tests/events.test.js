@@ -501,13 +501,13 @@ describe('browse, search and filter (TC-SRC-01)', () => {
     await request(app).get('/api/events?from=2026-11-01&to=2026-11-30');
     const startClauses = clauses().filter((c) => c.startAt);
     expect(startClauses).toHaveLength(3);
-    expect(startClauses.some((c) => c.startAt.$gte && c.startAt.$gte.toISOString().startsWith('2026-11-01'))).toBe(true);
+    expect(startClauses.some((c) => c.startAt.$gte && c.startAt.$gte.toISOString().toISOString() === '2026-11-01T00:00:00.000Z')).toBe(true);
     // # CHANGED: Date-only upper bound is exclusive midnight of the next day.
     expect(
       startClauses.some(
         (c) =>
           c.startAt.$lt &&
-          c.startAt.$lt.toISOString() === '2026-12-01T00:00:00.000Z'
+          c.startAt.$lt.toISOString() === '2026-11-30T18:30:00.000Z'
       )
     ).toBe(true);
 
@@ -570,7 +570,14 @@ describe('browse, search and filter (TC-SRC-01)', () => {
     expect(chain.limit).toHaveBeenCalledWith(10);
   });
 
-// # CHANGED: Date-only upper bounds include the entire end date.
+test('from date starts at midnight India time', async () => {
+  mockList();
+  await request(app).get('/api/events?from=2026-11-30');
+  const dateClause = clauses().find((clause) => clause.startAt && clause.startAt.$gte);
+  expect(dateClause.startAt.$gte.toISOString()).toBe('2026-11-29T18:30:00.000Z');
+});
+
+// # CHANGED: Date-only upper bounds use exclusive midnight in India.
 test('to date includes events throughout that calendar day', async () => {
   mockList();
 
@@ -582,7 +589,7 @@ test('to date includes events throughout that calendar day', async () => {
 
   expect(dateClause).toBeDefined();
   expect(dateClause.startAt.$lt.toISOString()).toBe(
-    '2026-12-01T00:00:00.000Z'
+    '2026-11-30T18:30:00.000Z'
   );
 });
 
