@@ -380,12 +380,19 @@ describe('event details with remaining seats (EMS-F-015, TC-SRC-02)', () => {
   test('returns published event details and remaining seats', async () => {
     const event = makeEvent({ capacity: 50, seatsTaken: 12 });
     Event.findOne.mockResolvedValue(event);
+    Category.findById.mockResolvedValue({ name: 'Workshop' });
+    User.findById.mockResolvedValue({ name: 'Event Organizer', email: 'private@example.test', role: 'Organizer' });
 
     const res = await request(app).get(`/api/events/${EVENT_ID}`);
 
     expect(res.status).toBe(200);
     expect(res.body.event).toBeDefined();
     expect(res.body.remainingSeats).toBe(38);
+    expect(res.body.categoryName).toBe('Workshop');
+    expect(res.body.organizerName).toBe('Event Organizer');
+    expect(JSON.stringify(res.body)).not.toContain('private@example.test');
+    expect(res.body.event).not.toHaveProperty('role');
+    expect(User.findById).toHaveBeenCalledWith(ORG_ID, 'name');
     expect(Event.findOne).toHaveBeenCalledWith({
       _id: EVENT_ID,
       status: 'Published',
@@ -400,6 +407,7 @@ describe('event details with remaining seats (EMS-F-015, TC-SRC-02)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.remainingSeats).toBe(0);
+    expect(res.body).toHaveProperty('remainingSeats', 0);
   });
 
   test('returns 404 for an invalid event ID', async () => {

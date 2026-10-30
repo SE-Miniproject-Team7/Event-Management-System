@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const mongoose = require('mongoose');
 const Event = require('../../models/Event');
+const User = require('../../models/User');
 const Category = require('../../models/Category');
 const Registration = require('../../models/Registration');
 const { authenticate, requireRole } = require('../../middleware/auth');
@@ -86,13 +87,17 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
   if (!event) throw notFound();
 
-  // # CHANGED: Calculate remaining seats using the shared helper.
-  const eventWithRemaining = withRemaining(event);
+  // Return display names only; never serialize private organizer fields.
+  const [category, organizer] = await Promise.all([
+    Category.findById(event.categoryId),
+    User.findById(event.organizerId, 'name'),
+  ]);
 
-  // # CHANGED: Preserve the existing API response contract.
   res.json({
     event,
-    remainingSeats: eventWithRemaining.remainingSeats,
+    remainingSeats: event.capacity - event.seatsTaken,
+    categoryName: category?.name || null,
+    organizerName: organizer?.name || null,
   });
 }));
 
