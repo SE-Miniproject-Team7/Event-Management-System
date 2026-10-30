@@ -501,7 +501,7 @@ describe('browse, search and filter (TC-SRC-01)', () => {
     await request(app).get('/api/events?from=2026-11-01&to=2026-11-30');
     const startClauses = clauses().filter((c) => c.startAt);
     expect(startClauses).toHaveLength(3);
-    expect(startClauses.some((c) => c.startAt.$gte && c.startAt.$gte.toISOString().toISOString() === '2026-10-31T18:30:00.000Z')).toBe(true);
+    expect(startClauses.some((c) => c.startAt.$gte && c.startAt.$gte.toISOString() === '2026-10-31T18:30:00.000Z')).toBe(true);
     // # CHANGED: Date-only upper bound is exclusive midnight of the next day.
     expect(
       startClauses.some(
@@ -573,8 +573,9 @@ describe('browse, search and filter (TC-SRC-01)', () => {
 test('from date starts at midnight India time', async () => {
   mockList();
   await request(app).get('/api/events?from=2026-11-30');
-  const dateClause = clauses().find((clause) => clause.startAt && clause.startAt.$gte);
-  expect(dateClause.startAt.$gte.toISOString()).toBe('2026-11-29T18:30:00.000Z');
+  expect(clauses()).toContainEqual({
+    startAt: { $gte: new Date('2026-11-29T18:30:00.000Z') },
+  });
 });
 
 // # CHANGED: Date-only upper bounds use exclusive midnight in India.
