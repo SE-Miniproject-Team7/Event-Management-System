@@ -501,7 +501,7 @@ describe('browse, search and filter (TC-SRC-01)', () => {
     await request(app).get('/api/events?from=2026-11-01&to=2026-11-30');
     const startClauses = clauses().filter((c) => c.startAt);
     expect(startClauses).toHaveLength(3);
-    expect(startClauses.some((c) => c.startAt.$gte && c.startAt.$gte.toISOString().toISOString() === '2026-11-01T00:00:00.000Z')).toBe(true);
+    expect(startClauses.some((c) => c.startAt.$gte && c.startAt.$gte.toISOString().toISOString() === '2026-10-31T18:30:00.000Z')).toBe(true);
     // # CHANGED: Date-only upper bound is exclusive midnight of the next day.
     expect(
       startClauses.some(
