@@ -374,6 +374,65 @@ describe('category management (TC-ADM-02)', () => {
   });
 });
 
+
+ // # CHANGED: Add dedicated coverage for EMS-F-015 event details.
+describe('event details with remaining seats (EMS-F-015, TC-SRC-02)', () => {
+  test('returns published event details and remaining seats', async () => {
+    const event = makeEvent({ capacity: 50, seatsTaken: 12 });
+    Event.findOne.mockResolvedValue(event);
+    Category.findById.mockResolvedValue({ name: 'Workshop' });
+    User.findById.mockResolvedValue({ name: 'Event Organizer', email: 'private@example.test', role: 'Organizer' });
+
+    const res = await request(app).get(`/api/events/${EVENT_ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.event).toBeDefined();
+    expect(res.body.remainingSeats).toBe(38);
+    expect(res.body.categoryName).toBe('Workshop');
+    expect(res.body.organizerName).toBe('Event Organizer');
+    expect(JSON.stringify(res.body)).not.toContain('private@example.test');
+    expect(res.body.event).not.toHaveProperty('role');
+    expect(User.findById).toHaveBeenCalledWith(ORG_ID, 'name');
+    expect(Event.findOne).toHaveBeenCalledWith({
+      _id: EVENT_ID,
+      status: 'Published',
+    });
+  });
+
+  test('returns zero remaining seats when the event is fully booked', async () => {
+    const event = makeEvent({ capacity: 50, seatsTaken: 50 });
+    Event.findOne.mockResolvedValue(event);
+
+    const res = await request(app).get(`/api/events/${EVENT_ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.remainingSeats).toBe(0);
+    expect(res.body).toHaveProperty('remainingSeats', 0);
+  });
+
+  test('returns 404 for an invalid event ID', async () => {
+    const res = await request(app).get('/api/events/not-an-id');
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+    expect(Event.findOne).not.toHaveBeenCalled();
+  });
+
+  test('returns 404 when the event is not published or does not exist', async () => {
+    Event.findOne.mockResolvedValue(null);
+
+    const res = await request(app).get(`/api/events/${EVENT_ID}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+    expect(Event.findOne).toHaveBeenCalledWith({
+      _id: EVENT_ID,
+      status: 'Published',
+    });
+  });
+});
+
+
 describe('browse, search and filter (TC-SRC-01)', () => {
   function mockList(items = [], total = items.length) {
     const chain = {

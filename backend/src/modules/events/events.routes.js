@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const mongoose = require('mongoose');
 const Event = require('../../models/Event');
+const User = require('../../models/User');
 const Category = require('../../models/Category');
 const Registration = require('../../models/Registration');
 const { authenticate, requireRole } = require('../../middleware/auth');
@@ -74,12 +75,33 @@ router.get('/pending', authenticate, requireRole('Admin'), asyncHandler(async (r
   res.json({ items });
 }));
 
+
+
 router.get('/:id', asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) throw notFound();
-  const event = await Event.findOne({ _id: req.params.id, status: 'Published' });
+
+  const event = await Event.findOne({
+    _id: req.params.id,
+    status: 'Published',
+  });
+
   if (!event) throw notFound();
-  res.json({ event, remainingSeats: event.capacity - event.seatsTaken });
+
+  // Return display names only; never serialize private organizer fields.
+  const [category, organizer] = await Promise.all([
+    Category.findById(event.categoryId),
+    User.findById(event.organizerId, 'name'),
+  ]);
+
+  res.json({
+    event,
+    remainingSeats: event.capacity - event.seatsTaken,
+    categoryName: category?.name || null,
+    organizerName: organizer?.name || null,
+  });
 }));
+
+
 
 // Admin approves or rejects (EMS-F-010)
 router.patch('/:id/approval', authenticate, requireRole('Admin'), asyncHandler(async (req, res) => {
