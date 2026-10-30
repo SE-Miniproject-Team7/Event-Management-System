@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../services/api'
 
 function PendingEventsPage() {
@@ -126,7 +127,12 @@ function PendingEventsPage() {
 
       {message && (
         <p className="management-message success" role="status">
-          {message}
+          {message}{' '}
+          {message.includes('approved') && (
+            <Link to="/events" style={{ textDecoration: 'underline', fontWeight: 600, marginLeft: '0.5rem' }}>
+              View on Explore Events →
+            </Link>
+          )}
         </p>
       )}
 
