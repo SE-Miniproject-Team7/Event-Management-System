@@ -22,6 +22,10 @@ function CreateEventPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  const now = new Date()
+  const offsetMs = now.getTimezoneOffset() * 60000
+  const minDateTime = new Date(now.getTime() - offsetMs).toISOString().slice(0, 16)
+
   useEffect(() => {
     let cancelled = false
 
@@ -99,6 +103,18 @@ function CreateEventPage() {
       end <= start
     ) {
       setError('The event end date and time must be after the start.')
+      return
+    }
+
+    if (start <= new Date()) {
+      setError(
+        'The event start date and time must be in the future (the Explore page only lists upcoming events).',
+      )
+      return
+    }
+
+    if (deadline <= new Date()) {
+      setError('The registration deadline must be in the future.')
       return
     }
 
@@ -248,6 +264,7 @@ function CreateEventPage() {
               name="startAt"
               value={form.startAt}
               onChange={handleChange}
+              min={minDateTime}
               required
             />
           </label>
@@ -259,6 +276,7 @@ function CreateEventPage() {
               name="endAt"
               value={form.endAt}
               onChange={handleChange}
+              min={form.startAt || minDateTime}
               required
             />
           </label>
@@ -272,6 +290,8 @@ function CreateEventPage() {
               name="registrationDeadline"
               value={form.registrationDeadline}
               onChange={handleChange}
+              min={minDateTime}
+              max={form.startAt || undefined}
               required
             />
           </label>
