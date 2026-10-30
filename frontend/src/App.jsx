@@ -1,6 +1,12 @@
 ﻿
 import { useEffect, useState } from 'react'
-import { Link, Route, Routes, useNavigate } from 'react-router-dom'
+import {
+  Link,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
 import HomePage from './pages/HomePage.jsx'
 import CreateEventPage from './pages/CreateEventPage.jsx'
 import PendingEventsPage from './pages/PendingEventsPage.jsx'
@@ -16,7 +22,9 @@ function App() {
   const [user, setUser] = useState(null)
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
+
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     let active = true
@@ -36,6 +44,33 @@ function App() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    function handleUnauthenticated() {
+      setUser(null)
+
+      if (location.pathname !== '/login') {
+        const currentPath = `${location.pathname}${location.search}`
+
+        navigate('/login', {
+          replace: true,
+          state: { from: currentPath },
+        })
+      }
+    }
+
+    window.addEventListener(
+      'ems:unauthenticated',
+      handleUnauthenticated,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'ems:unauthenticated',
+        handleUnauthenticated,
+      )
+    }
+  }, [location.pathname, location.search, navigate])
 
   async function handleLogout() {
     setLoggingOut(true)

@@ -1,11 +1,10 @@
 
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import api from '../services/api'
 
 function EventDetailsPage() {
   const { id } = useParams()
-  const navigate = useNavigate()
 
   const [event, setEvent] = useState(null)
   const [remainingSeats, setRemainingSeats] = useState(null)
@@ -71,6 +70,7 @@ function EventDetailsPage() {
           }.`,
         )
       }
+
       try {
         const refreshed = await api.get(`/events/${id}`)
         setRemainingSeats(refreshed.data.remainingSeats ?? null)
@@ -88,11 +88,6 @@ function EventDetailsPage() {
       const message =
         err.response?.data?.error?.message ||
         'Registration failed. Please try again.'
-
-      if (status === 401) {
-        navigate('/login', { state: { from: `/events/${id}` } })
-        return
-      }
 
       if (status === 403) {
         setRegistrationError(
