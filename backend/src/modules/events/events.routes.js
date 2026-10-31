@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const mongoose = require('mongoose');
 const Event = require('../../models/Event');
+const User = require('../../models/User');
 const Category = require('../../models/Category');
 const Registration = require('../../models/Registration');
 const { authenticate, requireRole } = require('../../middleware/auth');
@@ -10,15 +11,16 @@ const AppError = require('../../utils/AppError');
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const withRemaining = (e) => ({ ...e.toObject(), remainingSeats: e.capacity - e.seatsTaken });
 const notFound = () => new AppError(404, 'NOT_FOUND', 'Event not found');
+const parseDate = (value) => typeof value === 'string' && value.trim() ? new Date(value) : new Date(NaN);
 
 // Create event (Organizer) -> status Pending Approval (EMS-F-007/008/009)
 router.post('/', authenticate, requireRole('Organizer'), asyncHandler(async (req, res) => {
   const b = req.body || {};
   const fields = [];
-  const start = new Date(b.startAt), end = new Date(b.endAt), deadline = new Date(b.registrationDeadline);
-  if (typeof b.title !== 'string' || b.title.trim().length < 3) fields.push({ field: 'title', message: 'Title is required (min 3 characters)' });
-  if (typeof b.description !== 'string' || !b.description.trim()) fields.push({ field: 'description', message: 'Description is required' });
-  if (typeof b.venue !== 'string' || !b.venue.trim()) fields.push({ field: 'venue', message: 'Venue is required' });
+  const start = parseDate(b.startAt), end = parseDate(b.endAt), deadline = parseDate(b.registrationDeadline);
+  if (typeof b.title !== 'string' || b.title.trim().length < 3 || b.title.trim().length > 100) fields.push({ field: 'title', message: 'Title must be 3 to 100 characters' });
+  if (typeof b.description !== 'string' || !b.description.trim() || b.description.trim().length > 2000) fields.push({ field: 'description', message: 'Description is required (max 2000 characters)' });
+  if (typeof b.venue !== 'string' || !b.venue.trim() || b.venue.trim().length > 100) fields.push({ field: 'venue', message: 'Venue is required (max 100 characters)' });
   if (isNaN(start)) fields.push({ field: 'startAt', message: 'Valid start date required' });
   if (isNaN(end) || end <= start) fields.push({ field: 'endAt', message: 'End must be after start' });
   if (isNaN(deadline) || deadline > start) fields.push({ field: 'registrationDeadline', message: 'Deadline must be on or before the start' });
@@ -50,8 +52,30 @@ router.get('/', asyncHandler(async (req, res) => {
   if (typeof req.query.category === 'string' && mongoose.isValidObjectId(req.query.category)) {
     and.push({ categoryId: req.query.category });
   }
-  if (typeof req.query.from === 'string') { const d = new Date(req.query.from); if (!isNaN(d)) and.push({ startAt: { $gte: d } }); }
-  if (typeof req.query.to === 'string') { const d = new Date(req.query.to); if (!isNaN(d)) and.push({ startAt: { $lte: d } }); }
+  // # CHANGED: Treat YYYY-MM-DD filters as inclusive calendar dates.
+  if (typeof req.query.from === 'string') {
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(req.query.from);
+    const d = new Date(dateOnly ? `${req.query.from}T00:00:00+05:30` : req.query.from);
+    if (!isNaN(d)) {
+      and.push({ startAt: { $gte: d } });
+    }
+  }
+
+  if (typeof req.query.to === 'string') {
+    const d = new Date(req.query.to);
+
+    if (!isNaN(d)) {
+      // # CHANGED: Include the entire end date for date-only query values.
+      if (/^\d{4}-\d{2}-\d{2}$/.test(req.query.to)) {
+        const end = new Date(`${req.query.to}T00:00:00+05:30`);
+        end.setUTCDate(end.getUTCDate() + 1);
+        and.push({ startAt: { $lt: end } });
+      } else {
+        // Preserve exact timestamp behavior for timestamp query values.
+        and.push({ startAt: { $lte: d } });
+      }
+    }
+  }
   if (req.query.available === 'true') and.push({ $expr: { $lt: ['$seatsTaken', '$capacity'] } });
 
   const filter = { $and: and };
@@ -73,12 +97,33 @@ router.get('/pending', authenticate, requireRole('Admin'), asyncHandler(async (r
   res.json({ items });
 }));
 
+
+
 router.get('/:id', asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) throw notFound();
-  const event = await Event.findOne({ _id: req.params.id, status: 'Published' });
+
+  const event = await Event.findOne({
+    _id: req.params.id,
+    status: 'Published',
+  });
+
   if (!event) throw notFound();
-  res.json({ event, remainingSeats: event.capacity - event.seatsTaken });
+
+  // Return display names only; never serialize private organizer fields.
+  const [category, organizer] = await Promise.all([
+    Category.findById(event.categoryId),
+    User.findById(event.organizerId, 'name'),
+  ]);
+
+  res.json({
+    event,
+    remainingSeats: event.capacity - event.seatsTaken,
+    categoryName: category?.name || null,
+    organizerName: organizer?.name || null,
+  });
 }));
+
+
 
 // Admin approves or rejects (EMS-F-010)
 router.patch('/:id/approval', authenticate, requireRole('Admin'), asyncHandler(async (req, res) => {

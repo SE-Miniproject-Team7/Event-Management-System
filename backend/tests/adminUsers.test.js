@@ -6,7 +6,9 @@ const bcrypt = require('bcryptjs');
 
 jest.mock('../src/models/User', () => ({
   findById: jest.fn(), findByIdAndUpdate: jest.fn(), findOne: jest.fn(),
+  find: jest.fn(), countDocuments: jest.fn(),
 }));
+jest.mock('../src/modules/admin/withAdminLock', () => async operation => operation(undefined));
 jest.mock('../src/models/Event', () => ({ find: jest.fn() }));
 
 const User = require('../src/models/User');
@@ -36,6 +38,7 @@ beforeEach(() => {
     Object.assign(user, $set);
     return { ...user };
   });
+  User.countDocuments.mockImplementation(async () => [...users.values()].filter(u => u.active && u.role === 'Admin').length);
   Event.find.mockReturnValue({ sort: jest.fn().mockResolvedValue([]) });
 });
 
@@ -45,7 +48,7 @@ describe('Admin user management (EMS-F-031 / TC-ADM-01)', () => {
     const res = await update({ active });
     expect(res.status).toBe(200);
     expect(res.body.user).toEqual({ id: USER_ID, name: 'Attendee', email: 'attendee@test.local', role: 'Attendee', active });
-    expect(User.findByIdAndUpdate).toHaveBeenCalledWith(USER_ID, { $set: { active } }, { returnDocument: 'after', runValidators: true });
+    expect(User.findByIdAndUpdate).toHaveBeenCalledWith(USER_ID, { $set: { active } }, { returnDocument: 'after', runValidators: true, session: undefined });
     expect(users.get(USER_ID).passwordHash).toBe(passwordHash);
   });
 
@@ -146,5 +149,42 @@ describe('Admin user management (EMS-F-031 / TC-ADM-01)', () => {
     expect((await request(app).get('/api/events/mine').set('Cookie', session)).status).toBe(200);
     expect((await update({ role: 'Attendee' })).status).toBe(200);
     expect((await request(app).get('/api/events/mine').set('Cookie', session)).status).toBe(403);
+  });
+});
+
+describe('Admin discovery and last administrator policy', () => {
+  test('search is literal, paginated and excludes private fields', async () => {
+    const chain = { select: jest.fn().mockReturnThis(), sort: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(), limit: jest.fn().mockResolvedValue([...users.values()]) };
+    User.find.mockReturnValue(chain);
+    User.countDocuments.mockResolvedValue(12);
+    const res = await request(app).get('/api/admin/users?q=a.b(&page=2').set('Cookie', adminCookie());
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(12);
+    expect(chain.skip).toHaveBeenCalledWith(10);
+    expect(chain.limit).toHaveBeenCalledWith(10);
+    const filter = User.find.mock.calls[0][0];
+    expect(filter.$or[0].name.test('a.b(')).toBe(true);
+    expect(filter.$or[0].name.test('axb(')).toBe(false);
+    expect(res.body.items[0]).not.toHaveProperty('passwordHash');
+    expect(chain.select).toHaveBeenCalledWith('_id name email role active');
+  });
+  test.each([null, 'Attendee', 'Organizer'])('discovery rejects %s access', async role => {
+    let req = request(app).get('/api/admin/users');
+    if (role) req = req.set('Cookie', cookie(USER_ID, role));
+    const res = await req;
+    expect(res.status).toBe(role ? 403 : 401);
+    expect(User.find).not.toHaveBeenCalled();
+  });
+  test.each([{ active: false }, { role: 'Attendee' }, { active: false, role: 'Organizer' }])(
+    'rejects removal of the last active admin: %j', async body => {
+      const res = await request(app).patch(`/api/admin/users/${ADMIN_ID}`).set('Cookie', adminCookie()).send(body);
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('LAST_ACTIVE_ADMIN');
+      expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
+    });
+  test('allows a last admin to keep their role and active state', async () => {
+    const res = await request(app).patch(`/api/admin/users/${ADMIN_ID}`).set('Cookie', adminCookie()).send({ role: 'Admin', active: true });
+    expect(res.status).toBe(200);
   });
 });

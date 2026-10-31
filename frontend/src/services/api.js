@@ -9,4 +9,35 @@ const api = axios.create({
   },
 })
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status
+    const code = error.response?.data?.error?.code
+    const requestUrl = error.config?.url || ''
+
+    const excludedEndpoints = [
+      '/auth/login',
+      '/auth/me',
+      '/auth/logout',
+    ]
+
+    const isExcludedEndpoint = excludedEndpoints.some(
+      (endpoint) =>
+        requestUrl === endpoint ||
+        requestUrl.startsWith(`${endpoint}?`),
+    )
+
+    if (
+      status === 401 &&
+      code === 'UNAUTHENTICATED' &&
+      !isExcludedEndpoint
+    ) {
+      window.dispatchEvent(new Event('ems:unauthenticated'))
+    }
+
+    return Promise.reject(error)
+  },
+)
+
 export default api

@@ -106,6 +106,16 @@ describe('create event (TC-EVT-01, TC-EVT-02)', () => {
   test.each([
     ['venue', { venue: '' }],
     ['title', { title: 'ab' }],
+    ['title', { title: 'x'.repeat(101) }],
+    ['description', { description: 'x'.repeat(2001) }],
+    ['venue', { venue: 'x'.repeat(101) }],
+    ['startAt', { startAt: null }],
+    ['startAt', { startAt: 0 }],
+    ['startAt', { startAt: [] }],
+    ['endAt', { endAt: null }],
+    ['endAt', { endAt: false }],
+    ['registrationDeadline', { registrationDeadline: null }],
+    ['registrationDeadline', { registrationDeadline: {} }],
     ['endAt', { endAt: iso(10, -1) }],
     ['registrationDeadline', { registrationDeadline: iso(11) }],
     ['capacity', { capacity: 0 }],
@@ -118,6 +128,17 @@ describe('create event (TC-EVT-01, TC-EVT-02)', () => {
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
     expect(res.body.error.fields.map((f) => f.field)).toContain(field);
     expect(Event.create).not.toHaveBeenCalled();
+  });
+
+  test('accepts maximum text lengths and trims the stored values', async () => {
+    const { cookie } = loginAs('Organizer');
+    const res = await request(app).post('/api/events').set('Cookie', cookie).send(validBody({
+      title: '  ' + 'T'.repeat(100) + '  ', description: 'D'.repeat(2000), venue: 'V'.repeat(100),
+    }));
+    expect(res.status).toBe(201);
+    expect(Event.create).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'T'.repeat(100), description: 'D'.repeat(2000), venue: 'V'.repeat(100),
+    }));
   });
 
   test('rejects an unknown or inactive category', async () => {
@@ -353,6 +374,65 @@ describe('category management (TC-ADM-02)', () => {
   });
 });
 
+
+ // # CHANGED: Add dedicated coverage for EMS-F-015 event details.
+describe('event details with remaining seats (EMS-F-015, TC-SRC-02)', () => {
+  test('returns published event details and remaining seats', async () => {
+    const event = makeEvent({ capacity: 50, seatsTaken: 12 });
+    Event.findOne.mockResolvedValue(event);
+    Category.findById.mockResolvedValue({ name: 'Workshop' });
+    User.findById.mockResolvedValue({ name: 'Event Organizer', email: 'private@example.test', role: 'Organizer' });
+
+    const res = await request(app).get(`/api/events/${EVENT_ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.event).toBeDefined();
+    expect(res.body.remainingSeats).toBe(38);
+    expect(res.body.categoryName).toBe('Workshop');
+    expect(res.body.organizerName).toBe('Event Organizer');
+    expect(JSON.stringify(res.body)).not.toContain('private@example.test');
+    expect(res.body.event).not.toHaveProperty('role');
+    expect(User.findById).toHaveBeenCalledWith(ORG_ID, 'name');
+    expect(Event.findOne).toHaveBeenCalledWith({
+      _id: EVENT_ID,
+      status: 'Published',
+    });
+  });
+
+  test('returns zero remaining seats when the event is fully booked', async () => {
+    const event = makeEvent({ capacity: 50, seatsTaken: 50 });
+    Event.findOne.mockResolvedValue(event);
+
+    const res = await request(app).get(`/api/events/${EVENT_ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.remainingSeats).toBe(0);
+    expect(res.body).toHaveProperty('remainingSeats', 0);
+  });
+
+  test('returns 404 for an invalid event ID', async () => {
+    const res = await request(app).get('/api/events/not-an-id');
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+    expect(Event.findOne).not.toHaveBeenCalled();
+  });
+
+  test('returns 404 when the event is not published or does not exist', async () => {
+    Event.findOne.mockResolvedValue(null);
+
+    const res = await request(app).get(`/api/events/${EVENT_ID}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+    expect(Event.findOne).toHaveBeenCalledWith({
+      _id: EVENT_ID,
+      status: 'Published',
+    });
+  });
+});
+
+
 describe('browse, search and filter (TC-SRC-01)', () => {
   function mockList(items = [], total = items.length) {
     const chain = {
@@ -421,8 +501,15 @@ describe('browse, search and filter (TC-SRC-01)', () => {
     await request(app).get('/api/events?from=2026-11-01&to=2026-11-30');
     const startClauses = clauses().filter((c) => c.startAt);
     expect(startClauses).toHaveLength(3);
-    expect(startClauses.some((c) => c.startAt.$gte && c.startAt.$gte.toISOString().startsWith('2026-11-01'))).toBe(true);
-    expect(startClauses.some((c) => c.startAt.$lte && c.startAt.$lte.toISOString().startsWith('2026-11-30'))).toBe(true);
+    expect(startClauses.some((c) => c.startAt.$gte && c.startAt.$gte.toISOString() === '2026-10-31T18:30:00.000Z')).toBe(true);
+    // # CHANGED: Date-only upper bound is exclusive midnight of the next day.
+    expect(
+      startClauses.some(
+        (c) =>
+          c.startAt.$lt &&
+          c.startAt.$lt.toISOString() === '2026-11-30T18:30:00.000Z'
+      )
+    ).toBe(true);
 
     Event.find.mockClear();
     mockList();
@@ -450,6 +537,18 @@ describe('browse, search and filter (TC-SRC-01)', () => {
     expect(filter.$and).toHaveLength(7);
   });
 
+  test('page two uses ten-event pages and counts the same combined result set', async () => {
+    const chain = mockList([], 23);
+    const res = await request(app).get(`/api/events?q=hack&category=${CAT_ID}&from=2026-11-01&to=2026-11-30&available=true&page=2`);
+
+    expect(chain.skip).toHaveBeenCalledWith(10);
+    expect(chain.limit).toHaveBeenCalledWith(10);
+    expect(res.body).toMatchObject({ page: 2, total: 23, items: [] });
+    expect(Event.countDocuments).toHaveBeenCalledWith(Event.find.mock.calls[0][0]);
+    expect(Event.find.mock.calls[0][0].$and).toHaveLength(7);
+  });
+
+
   test('pagination: page 3 with limit 5 skips 10', async () => {
     const chain = mockList([], 25);
     const res = await request(app).get('/api/events?page=3&limit=5');
@@ -470,4 +569,46 @@ describe('browse, search and filter (TC-SRC-01)', () => {
     expect(chain.skip).toHaveBeenCalledWith(0);
     expect(chain.limit).toHaveBeenCalledWith(10);
   });
+
+test('from date starts at midnight India time', async () => {
+  mockList();
+  await request(app).get('/api/events?from=2026-11-30');
+  expect(clauses()).toContainEqual({
+    startAt: { $gte: new Date('2026-11-29T18:30:00.000Z') },
+  });
+});
+
+// # CHANGED: Date-only upper bounds use exclusive midnight in India.
+test('to date includes events throughout that calendar day', async () => {
+  mockList();
+
+  await request(app).get('/api/events?to=2026-11-30');
+
+  const dateClause = clauses().find(
+    (clause) => clause.startAt && clause.startAt.$lt
+  );
+
+  expect(dateClause).toBeDefined();
+  expect(dateClause.startAt.$lt.toISOString()).toBe(
+    '2026-11-30T18:30:00.000Z'
+  );
+});
+
+// # CHANGED: Exact timestamp upper bounds remain inclusive.
+test('to timestamp remains an inclusive exact timestamp', async () => {
+  mockList();
+
+  await request(app).get(
+    '/api/events?to=2026-11-30T15:30:00.000Z'
+  );
+
+  const dateClause = clauses().find(
+    (clause) => clause.startAt && clause.startAt.$lte
+  );
+
+  expect(dateClause).toBeDefined();
+  expect(dateClause.startAt.$lte.toISOString()).toBe(
+    '2026-11-30T15:30:00.000Z'
+  );
+});
 });

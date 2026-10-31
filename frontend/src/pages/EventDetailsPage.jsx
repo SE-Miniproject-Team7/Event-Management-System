@@ -1,13 +1,15 @@
 
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import api from '../services/api'
 
 function EventDetailsPage() {
   const { id } = useParams()
-  const navigate = useNavigate()
 
   const [event, setEvent] = useState(null)
+  const [remainingSeats, setRemainingSeats] = useState(null)
+  const [categoryName, setCategoryName] = useState('')
+  const [organizerName, setOrganizerName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [registering, setRegistering] = useState(false)
@@ -23,6 +25,9 @@ function EventDetailsPage() {
 
         if (!cancelled) {
           setEvent(response.data.event)
+          setRemainingSeats(response.data.remainingSeats ?? null)
+          setCategoryName(response.data.categoryName || '')
+          setOrganizerName(response.data.organizerName || '')
         }
       } catch (err) {
         if (!cancelled) {
@@ -65,17 +70,24 @@ function EventDetailsPage() {
           }.`,
         )
       }
+
+      try {
+        const refreshed = await api.get(`/events/${id}`)
+        setRemainingSeats(refreshed.data.remainingSeats ?? null)
+        setEvent(refreshed.data.event)
+        setCategoryName(refreshed.data.categoryName || '')
+        setOrganizerName(refreshed.data.organizerName || '')
+      } catch {
+        setRegistrationError(
+          'Registration succeeded, but the seat count could not refresh. Reload the page to see the latest count.',
+        )
+      }
     } catch (err) {
       const status = err.response?.status
       const code = err.response?.data?.error?.code
       const message =
         err.response?.data?.error?.message ||
         'Registration failed. Please try again.'
-
-      if (status === 401) {
-        navigate('/auth/login')
-        return
-      }
 
       if (status === 403) {
         setRegistrationError(
@@ -115,6 +127,11 @@ function EventDetailsPage() {
       <h1>{event.title}</h1>
 
       <p>{event.description || 'No description available.'}</p>
+      <p><strong>Category:</strong> {categoryName || 'Not available'}</p>
+      <p>
+        <strong>Organizer:</strong> {organizerName || 'Not available'}
+      </p>
+
       <p>
         <strong>Venue:</strong> {event.venue || 'To be announced'}
       </p>
@@ -122,19 +139,27 @@ function EventDetailsPage() {
       <p>
         <strong>Starts:</strong>{' '}
         {event.startAt
-          ? new Date(event.startAt).toLocaleString()
+          ? new Date(event.startAt).toLocaleString('en-IN', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+              timeZone: 'Asia/Kolkata',
+            })
           : 'To be announced'}
       </p>
 
       <p>
         <strong>Ends:</strong>{' '}
         {event.endAt
-          ? new Date(event.endAt).toLocaleString()
+          ? new Date(event.endAt).toLocaleString('en-IN', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+              timeZone: 'Asia/Kolkata',
+            })
           : 'To be announced'}
       </p>
 
       <p>
-        <strong>Seats remaining:</strong> {responseSeats(event)}
+        <strong>Seats remaining:</strong> {remainingSeats ?? 'Not available'}
       </p>
 
       <button
@@ -154,10 +179,6 @@ function EventDetailsPage() {
       )}
     </section>
   )
-}
-
-function responseSeats(event) {
-  return event.remainingSeats ?? 'Not available'
 }
 
 export default EventDetailsPage

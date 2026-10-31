@@ -1,7 +1,16 @@
 ﻿
 import { useEffect, useState } from 'react'
-import { Link, Route, Routes, useNavigate } from 'react-router-dom'
+import {
+  Link,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
+import AdminUsersPage from './pages/AdminUsersPage.jsx'
 import HomePage from './pages/HomePage.jsx'
+import CreateEventPage from './pages/CreateEventPage.jsx'
+import PendingEventsPage from './pages/PendingEventsPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import EventsPage from './pages/EventsPage.jsx'
@@ -14,7 +23,9 @@ function App() {
   const [user, setUser] = useState(null)
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
+
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     let active = true
@@ -34,6 +45,33 @@ function App() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    function handleUnauthenticated() {
+      setUser(null)
+
+      if (location.pathname !== '/login') {
+        const currentPath = `${location.pathname}${location.search}`
+
+        navigate('/login', {
+          replace: true,
+          state: { from: currentPath },
+        })
+      }
+    }
+
+    window.addEventListener(
+      'ems:unauthenticated',
+      handleUnauthenticated,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'ems:unauthenticated',
+        handleUnauthenticated,
+      )
+    }
+  }, [location.pathname, location.search, navigate])
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -59,6 +97,9 @@ function App() {
         <nav className="app-nav" aria-label="Main navigation">
           <Link to="/">Home</Link>
           <Link to="/events">Explore Events</Link>
+          <Link to="/organizer/events/new">Create Event</Link>
+          <Link to="/admin/events/pending">Admin Approvals</Link>
+          {user?.role === 'Admin' && <Link to="/admin/users">Manage users</Link>}
 
           {!checkingAuth && !user && (
             <>
@@ -71,9 +112,7 @@ function App() {
 
           {!checkingAuth && user && (
             <>
-              <span className="user-greeting">
-                Hi, {user.name}
-              </span>
+              <span className="user-greeting">Hi, {user.name}</span>
               <button
                 type="button"
                 className="logout-button"
@@ -92,16 +131,22 @@ function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/admin/users" element={<AdminUsersPage user={user} checkingAuth={checkingAuth} onSelfUpdate={setUser} />} />
+          <Route
+            path="/organizer/events/new"
+            element={<CreateEventPage />}
+          />
+          <Route
+            path="/admin/events/pending"
+            element={<PendingEventsPage />}
+          />
           <Route
             path="/login"
             element={<LoginPage onLoginSuccess={setUser} />}
           />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/events" element={<EventsPage />} />
-          <Route
-            path="/events/:id"
-            element={<EventDetailsPage />}
-          />
+          <Route path="/events/:id" element={<EventDetailsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
