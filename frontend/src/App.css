@@ -888,3 +888,20 @@ a {
     text-align: center;
   }
 }
+
+.user-account {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.2rem;
+  margin: 1rem 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+}
+.user-account > div { flex: 1 1 220px; overflow-wrap: anywhere; }
+.user-account h2 { margin: 0; font-size: 1.1rem; }
+.user-account p { margin: .4rem 0; }
+.user-account select { padding: .6rem; }
+.user-account button { padding: .7rem; cursor: pointer; }
+.user-account button:disabled { opacity: .6; cursor: default; }

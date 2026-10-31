@@ -14,3 +14,15 @@ Differences between what was built and what the SRS, SAD and Test Plan (v1.0) de
 # Deviations from submitted documents
 
 - Event cancellation cancels all active registrations (Confirmed, Waitlisted, Checked-in) and resets seatsTaken to 0 in one transaction. Cancellation emails (EMS-F-024) are deferred to the Sprint 2 notification queue.
+
+## Admin user management (EMS-F-031 / TC-ADM-01)
+
+- Added Admin-only `GET /api/admin/users?q=&page=` for name/email discovery,
+  with ten accounts per page and only id, name, email, role and active fields.
+- Account updates require at least one active Admin to remain. Self-deactivation
+  or demotion is allowed only when another active Admin exists. A shared MongoDB
+  transaction lock serializes account changes, including concurrent requests;
+  the acting administrator is rechecked inside the transaction. MongoDB must
+  support transactions (replica set or Atlas), as required by registration too.
+- Seed/bootstrap scripts are operational tools outside this HTTP policy; do not
+  use them concurrently with account administration.
