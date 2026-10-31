@@ -66,3 +66,16 @@ Camera use requires localhost or HTTPS and browser permission; uploaded QR image
 and manual entry are available as fallbacks. Camera decoding/cleanup was tested
 with a simulated video stream; physical-device permission behavior remains a
 manual browser/device check. See CHECK_IN.md for reproduction.
+
+## Security review status (issue #41)
+
+See SECURITY_REVIEW.md for TC-SEC-01–07 evidence and TEAM_HANDOFF.md for current
+owners/dependencies. Local security checks cover merged features only. The team
+confirmed no deployed site exists, so TLS/HTTP redirection and deployed ZAP
+checks are not tested. Password reset, profile, email and event-edit changes
+must be re-tested after merging. Keep #41 open until final verification.
+
+Unexpected server errors now expose/log only safe metadata; malformed/oversized
+JSON gets a sanitized 400/413. Session algorithms/ID shapes are constrained and
+rate limiting precedes body parsing. Full structured request logging and CI
+integration remain with the owners of #25 and #68.
