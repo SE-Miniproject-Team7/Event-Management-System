@@ -1,3 +1,4 @@
+jest.mock('../src/modules/audit/audit.service', () => ({ recordAudit: jest.fn(), recordCheckIn: jest.fn() }));
 
 process.env.JWT_SECRET = 'test-jwt-secret-for-auth-tests';
 
@@ -340,5 +341,29 @@ describe('Authentication', () => {
     expect(authCookie).toBeDefined();
     expect(authCookie).toMatch(/Expires=/i);
     expect(authCookie).toMatch(/HttpOnly/i);
+  });
+});
+
+describe('authentication audit integration', () => {
+  const { recordAudit } = require('../src/modules/audit/audit.service');
+  test('logs successful login once before issuing a cookie', async () => {
+    const bcrypt = require('bcryptjs');
+    const User = require('../src/models/User');
+    const user = { _id: '64b0000000000000000000a1', name: 'Audit User', role: 'Attendee', active: true,
+      email: 'audit@test.local', passwordHash: await bcrypt.hash('Correct123!', 4), failedLogins: 0, lockUntil: null };
+    User.findOne = jest.fn().mockResolvedValue(user);
+    User.findOneAndUpdate = jest.fn().mockImplementation(async (filter, update) => Object.assign(user, update.$set));
+    recordAudit.mockClear();
+    const res = await request(app).post('/api/auth/login').send({ email: user.email, password: 'Correct123!' });
+    expect(res.status).toBe(200);
+    expect(recordAudit).toHaveBeenCalledTimes(1);
+    expect(recordAudit).toHaveBeenCalledWith(expect.anything(), 'LOGIN', { userId: user._id });
+  });
+  test('logs missing credentials without a supplied identity', async () => {
+    recordAudit.mockClear();
+    const res = await request(app).post('/api/auth/login').send({ password: 'do-not-log' });
+    expect(res.status).toBe(401);
+    expect(recordAudit).toHaveBeenCalledTimes(1);
+    expect(recordAudit).toHaveBeenCalledWith(expect.anything(), 'LOGIN_FAILED', { userId: null });
   });
 });

@@ -7,6 +7,7 @@ const asyncHandler = require('../../utils/asyncHandler');
 const { authenticate } = require('../../middleware/auth');
 const { setAuthCookie, clearAuthCookie } = require('../../utils/token');
 
+const { recordAudit } = require('../audit/audit.service');
 const { checkLock, recordLoginAttempt } = require('./lockout');
 
 // Return only public account details.
@@ -107,46 +108,55 @@ router.post('/register', asyncHandler(async (req, res) => {
 
 // Log in an existing user.
 router.post('/login', asyncHandler(async (req, res) => {
-  const email = typeof req.body?.email === 'string'
-    ? req.body.email.trim().toLowerCase()
-    : '';
+  let user = null;
+  try {
+    const email = typeof req.body?.email === 'string'
+      ? req.body.email.trim().toLowerCase()
+      : '';
 
-  const password = typeof req.body?.password === 'string'
-    ? req.body.password
-    : '';
+    const password = typeof req.body?.password === 'string'
+      ? req.body.password
+      : '';
 
-  if (!email || !password) {
-    throw new AppError(
-      401,
-      'INVALID_CREDENTIALS',
-      'Email or password is incorrect'
+    if (!email || !password) {
+      throw new AppError(
+        401,
+        'INVALID_CREDENTIALS',
+        'Email or password is incorrect'
+      );
+    }
+
+    user = await User.findOne({ email });
+
+    if (!user || !user.active) {
+      throw new AppError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
+    }
+
+    checkLock(user);
+
+    const validPassword = await bcrypt.compare(
+      password,
+      user.passwordHash
     );
+
+    user = await recordLoginAttempt(user, validPassword);
+
+    if (!validPassword) {
+      throw new AppError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
+    }
+
+    await recordAudit(req, 'LOGIN', { userId: user._id });
+    setAuthCookie(res, user);
+
+    return res.status(200).json({
+      user: publicUser(user),
+    });
+  } catch (error) {
+    if (['INVALID_CREDENTIALS', 'ACCOUNT_LOCKED'].includes(error.code)) {
+      await recordAudit(req, 'LOGIN_FAILED', { userId: user?._id || null });
+    }
+    throw error;
   }
-
-  let user = await User.findOne({ email });
-
-  if (!user || !user.active) {
-    throw new AppError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
-  }
-
-  checkLock(user);
-
-  const validPassword = await bcrypt.compare(
-    password,
-    user.passwordHash
-  );
-
-  user = await recordLoginAttempt(user, validPassword);
-
-  if (!validPassword) {
-    throw new AppError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
-  }
-
-  setAuthCookie(res, user);
-
-  return res.status(200).json({
-    user: publicUser(user),
-  });
 }));
 
 // Return the currently authenticated user's public details.

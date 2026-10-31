@@ -1,3 +1,4 @@
+jest.mock('../src/modules/audit/audit.service', () => ({ recordAudit: jest.fn(), recordCheckIn: jest.fn() }));
 process.env.JWT_SECRET = 'test-secret-for-events';
 
 const request = require('supertest');
@@ -57,7 +58,10 @@ function makeEvent(over = {}) {
   };
 }
 
-beforeEach(() => { jest.resetAllMocks(); });
+beforeEach(() => {
+  jest.resetAllMocks();
+  jest.spyOn(mongoose.connection, 'transaction').mockImplementation(async operation => operation(undefined));
+});
 afterAll(() => { jest.restoreAllMocks(); });
 
 describe('endpoints are protected', () => {
@@ -169,6 +173,9 @@ describe('admin approval (TC-EVT-03)', () => {
     const res = await approval(cookie, { decision: 'approve' });
     expect(res.status).toBe(200);
     expect(ev.status).toBe('Published');
+    expect(require('../src/modules/audit/audit.service').recordAudit).toHaveBeenCalledWith(
+      expect.anything(), 'EVENT_APPROVED', expect.objectContaining({ targetId: EVENT_ID, targetType: 'Event' })
+    );
     expect(ev.save).toHaveBeenCalled();
   });
 
@@ -189,6 +196,9 @@ describe('admin approval (TC-EVT-03)', () => {
     const res = await approval(cookie, { decision: 'reject', reason: 'Does not meet guidelines' });
     expect(res.status).toBe(200);
     expect(ev.status).toBe('Rejected');
+    expect(require('../src/modules/audit/audit.service').recordAudit).toHaveBeenCalledWith(
+      expect.anything(), 'EVENT_REJECTED', expect.objectContaining({ targetId: EVENT_ID, targetType: 'Event' })
+    );
     expect(ev.rejectionReason).toBe('Does not meet guidelines');
     expect(ev.save).toHaveBeenCalled();
   });
