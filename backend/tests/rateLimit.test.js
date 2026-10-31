@@ -47,3 +47,17 @@ test('the 101st API request is limited while health remains available', async ()
   expect(res.headers['ratelimit-policy']).toContain('q=100; w=60');
   expect((await request(app).get('/health')).status).toBe(200);
 });
+
+test('the real app counts malformed JSON toward both login and API limits', async () => {
+  const app = require('../src/app');
+  const malformed = path => request(app).post(path).set('Content-Type', 'application/json').send('{"invalid":');
+  for (let i = 0; i < 10; i++) expect((await malformed('/api/auth/login')).status).toBe(400);
+  const loginLimited = await malformed('/api/auth/login');
+  expect(loginLimited.status).toBe(429);
+  expect(loginLimited.body.error.code).toBe('AUTH_RATE_LIMIT_EXCEEDED');
+  for (let i = 0; i < 89; i++) expect((await malformed('/api/security-probe')).status).toBe(400);
+  const apiLimited = await malformed('/api/security-probe');
+  expect(apiLimited.status).toBe(429);
+  expect(apiLimited.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
+  expect((await request(app).get('/health')).status).toBe(200);
+});
