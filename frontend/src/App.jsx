@@ -7,6 +7,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
+import AdminSummaryPage from './pages/AdminSummaryPage.jsx'
 import AdminUsersPage from './pages/AdminUsersPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import CreateEventPage from './pages/CreateEventPage.jsx'
@@ -99,7 +100,10 @@ function App() {
           <Link to="/events">Explore Events</Link>
           <Link to="/organizer/events/new">Create Event</Link>
           <Link to="/admin/events/pending">Admin Approvals</Link>
-          {user?.role === 'Admin' && <Link to="/admin/users">Manage users</Link>}
+          {user?.role === 'Admin' && <>
+            <Link to="/admin/summary">Platform summary</Link>
+            <Link to="/admin/users">Manage users</Link>
+          </>}
 
           {!checkingAuth && !user && (
             <>
@@ -131,6 +135,7 @@ function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/admin/summary" element={<AdminSummaryPage user={user} checkingAuth={checkingAuth} />} />
           <Route path="/admin/users" element={<AdminUsersPage user={user} checkingAuth={checkingAuth} onSelfUpdate={setUser} />} />
           <Route
             path="/organizer/events/new"
