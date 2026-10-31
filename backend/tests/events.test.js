@@ -50,7 +50,9 @@ function validBody(over = {}) {
 
 function makeEvent(over = {}) {
   return {
-    _id: EVENT_ID, title: 'Hack Night', capacity: 50, seatsTaken: 12,
+    _id: EVENT_ID, title: 'Hack Night', description: 'Overnight hackathon', categoryId: CAT_ID,
+    venue: 'Hall A', capacity: 50, seatsTaken: 12,
+    registrationDeadline: new Date(Date.now() + 9 * DAY), endAt: new Date(Date.now() + 10 * DAY + 3 * 3600e3),
     organizerId: ORG_ID, status: 'Published', startAt: new Date(Date.now() + 10 * DAY),
     save: jest.fn().mockResolvedValue(undefined),
     toObject() { return { title: this.title, capacity: this.capacity, seatsTaken: this.seatsTaken }; },
