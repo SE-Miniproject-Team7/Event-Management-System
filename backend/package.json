@@ -8,10 +8,11 @@
   },
   "scripts": {
     "test": "jest --runInBand",
-    "test:integration": "node --test tests/lockout.integration.cjs tests/adminUsers.integration.cjs tests/adminSummary.integration.cjs tests/audit.integration.cjs tests/checkin.integration.cjs",
+    "test:integration": "node --test tests/lockout.integration.cjs tests/adminUsers.integration.cjs tests/adminSummary.integration.cjs tests/audit.integration.cjs tests/checkin.integration.cjs tests/security.integration.cjs",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "seed": "node src/seed.js"
+    "seed": "node src/seed.js",
+    "test:security": "jest --runInBand tests/security.test.js tests/accountRegistration.test.js tests/auth.test.js tests/rateLimit.test.js tests/adminUsers.test.js tests/audit.model.test.js tests/audit.service.test.js tests/checkin.test.js tests/events.test.js"
   },
   "keywords": [],
   "author": "",

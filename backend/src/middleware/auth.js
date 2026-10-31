@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
@@ -7,8 +8,11 @@ const authenticate = asyncHandler(async (req, res, next) => {
   const token = req.cookies && req.cookies.ems_token;
   if (!token) throw new AppError(401, 'UNAUTHENTICATED', 'Please log in');
   let payload;
-  try { payload = jwt.verify(token, process.env.JWT_SECRET); }
+  try { payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] }); }
   catch { throw new AppError(401, 'UNAUTHENTICATED', 'Session expired or invalid'); }
+  if (!payload || typeof payload !== 'object' || typeof payload.id !== 'string' || !mongoose.isValidObjectId(payload.id)) {
+    throw new AppError(401, 'UNAUTHENTICATED', 'Session expired or invalid');
+  }
   const user = await User.findById(payload.id);
   if (!user || !user.active) throw new AppError(401, 'UNAUTHENTICATED', 'Account not available');
   req.user = user;

@@ -1,0 +1,52 @@
+{
+  "reviewDateIST": "2026-10-31",
+  "baseCommit": "05e714d4e23a870adaf1c3370e6c4c4db8adf070",
+  "status": "local-pass-deployment-and-final-integration-pending",
+  "backendTests": 247,
+  "focusedSecurityTests": 219,
+  "mongoIntegrationTests": 30,
+  "frontendTests": 27,
+  "frontendLint": "pass",
+  "frontendBuild": "pass",
+  "browserXSS": "pass-real-stored-payloads-no-elements-or-alerts",
+  "productionAudit": {
+    "backendVulnerabilities": 0,
+    "frontendVulnerabilities": 0
+  },
+  "historySecretScan": {
+    "tool": "gitleaks 8.30.1",
+    "rules": "default",
+    "refs": "all fetched local refs",
+    "commits": 108,
+    "shallow": false,
+    "exitCode": 0,
+    "findings": 0,
+    "redactionPercent": 100
+  },
+  "deployment": {
+    "url": null,
+    "httpsTLS": "not-tested",
+    "zapBaseline": "not-tested"
+  },
+  "teamProbe": {
+    "parallelRequests": 60,
+    "confirmed": 10,
+    "waitlisted": 50,
+    "seatsTaken": 10,
+    "distinctWaitlistPositions": 15,
+    "afterStartCancellationHTTP": 200,
+    "ownerIssues": [
+      21,
+      22,
+      24
+    ]
+  },
+  "currentSourceSecretScan": {
+    "tool": "gitleaks 8.30.1",
+    "scope": "Git-tracked and non-ignored untracked files; excludes local ignored credentials and dependencies",
+    "files": 102,
+    "exitCode": 0,
+    "findings": 0,
+    "redactionPercent": 100
+  }
+}

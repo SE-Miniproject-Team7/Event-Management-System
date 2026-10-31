@@ -86,7 +86,7 @@ describe('Check-in endpoint (TC-CHK-01/02)', () => {
     expect(Registration.findOne).toHaveBeenCalledWith({ eventId: EVENT, regCode: 'REG-OTHER' }, null, { session });
   });
   test('audit failure prevents a successful response', async () => {
-    recordCheckIn.mockRejectedValue(Object.assign(new Error('Audit unavailable'), { status: 503, code: 'AUDIT_UNAVAILABLE' }));
+    recordCheckIn.mockRejectedValue(new (require('../src/utils/AppError'))(503, 'AUDIT_UNAVAILABLE', 'Audit unavailable'));
     expect((await post({ regCode: 'REG-ABC123' })).status).toBe(503);
   });
 });
