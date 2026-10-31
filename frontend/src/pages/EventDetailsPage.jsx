@@ -1,4 +1,6 @@
 
+import { QRCodeSVG } from 'qrcode.react'
+import './CheckInPage.css'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import api from '../services/api'
@@ -7,6 +9,7 @@ function EventDetailsPage() {
   const { id } = useParams()
 
   const [event, setEvent] = useState(null)
+  const [registrationPass, setRegistrationPass] = useState(null)
   const [remainingSeats, setRemainingSeats] = useState(null)
   const [categoryName, setCategoryName] = useState('')
   const [organizerName, setOrganizerName] = useState('')
@@ -56,6 +59,7 @@ function EventDetailsPage() {
     try {
       const response = await api.post(`/events/${id}/registrations`)
       const result = response.data
+      if (result.regCode) setRegistrationPass({ eventId: id, regCode: result.regCode, status: result.status })
 
       if (result.status === 'Waitlisted') {
         setRegistrationMessage(
@@ -170,6 +174,12 @@ function EventDetailsPage() {
         {registering ? 'Registering...' : 'Register for Event'}
       </button>
 
+      {registrationPass?.eventId === id && <section className="registration-qr" aria-label="Registration QR code">
+        <h2>Your registration code</h2>
+        <QRCodeSVG value={registrationPass.regCode} size={192} marginSize={4} role="img" aria-label={`QR code for ${registrationPass.regCode}`} />
+        <code>{registrationPass.regCode}</code>
+        <p>Save this QR code for check-in. Only confirmed registrations can be checked in.</p>
+      </section>}
       {registrationMessage && (
         <p role="status">{registrationMessage}</p>
       )}
