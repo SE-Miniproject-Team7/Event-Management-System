@@ -1,6 +1,6 @@
 # Security audit logging — issue #40
 
-Implements EMS-SEC-006 and the available action paths in TC-SEC-05.
+Implements EMS-SEC-006 and the action paths in TC-SEC-05, including the check-in endpoint added for #29.
 
 ## Records and privacy
 
@@ -27,7 +27,7 @@ hosting behind a reverse proxy; do not trust arbitrary forwarded headers.
 | EVENT_APPROVED | Pending event approved by an administrator |
 | EVENT_REJECTED | Pending event rejected by an administrator |
 | EVENT_CANCELLED | Published event cancelled by its organizer |
-| CHECK_IN | Successful check-in via the hook below; endpoint integration depends on #29 |
+| CHECK_IN | Confirmed registration changed to Checked-in through POST /api/events/:id/checkin |
 
 Unauthenticated/unauthorized mutations, validation failures and no-op account
 updates do not create successful-action entries. Requests rejected by the
@@ -49,24 +49,17 @@ instantaneous at the exact expiry second. The API startup initializes this index
 before accepting requests. Do not edit audit documents as part of app operation.
 No public audit browsing/editing API is added.
 
-## Required check-in integration — issue #29
+## Check-in integration — issue #29
 
-The check-in endpoint is absent from main at implementation time. **Do not close
-#40 until the real #29 endpoint is wired and TC-SEC-05 is rerun end to end.**
-After authorizing the organizer, validating the check-in window and atomically
-changing a Confirmed registration to Checked-in, call this once inside the same
-transaction:
+`POST /api/events/:id/checkin` now calls `recordCheckIn(req, registration, session)`
+after its conditional Confirmed-to-Checked-in update and before transaction
+commit. Duplicate, ineligible, wrong-event and out-of-window requests create no
+successful check-in entry. Audit failure rolls back check-in and its timestamp.
 
-```js
-const { recordCheckIn } = require('../audit/audit.service');
-// after saving the registration with this session:
-await recordCheckIn(req, registration, session);
-```
-
-Duplicate or rejected check-ins must not call the hook. The helper requires a
-Checked-in registration with `checkedInAt`. Its transactional persistence and
-repeat-request pattern are tested, but that does not replace testing the real
-check-in route when implemented.
+`checkin.integration.cjs` exercises the real HTTP endpoint, stored audit records,
+eight concurrent attempts, audit failure rollback and event cancellation races.
+This completes the endpoint wiring that was pending when #40 was implemented.
+See [CHECK_IN.md](CHECK_IN.md) for the workflow and remaining device testing.
 
 ## Verification
 
@@ -77,7 +70,7 @@ test database and removes only that database afterward.
 
 Tests cover login outcomes, role/activity no-ops, approval/rejection/cancellation,
 privacy, spoofed forwarded headers, audit failure rollback, transaction retries,
-the check-in hook and the installed TTL index. TTL configuration is verified;
+the check-in hook, the real check-in endpoint and the installed TTL index. TTL configuration is verified;
 the tests do not wait 90 days for the monitor.
 
 To inspect local results through MongoDB Compass or mongosh, open `auditlogs`

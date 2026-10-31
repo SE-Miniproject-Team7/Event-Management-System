@@ -43,5 +43,26 @@ See [AUDIT_LOGGING.md](AUDIT_LOGGING.md) for events, failure behavior, privacy,
 90-day TTL retention and verification. Unknown login attempts use null user ID
 because no authenticated actor exists; no attempted email or credentials are
 stored. Mutation audit entries share their transaction with the domain write.
-Check-in logging has a tested shared hook, but actual endpoint integration and
-full TC-SEC-05 remain dependent on #29. Keep #40 open until that is verified.
+The #29 check-in endpoint now calls the audit hook in its transaction. Real HTTP
+integration tests verify one audit per successful check-in, concurrent attempts,
+and rollback when audit persistence fails.
+
+## Attendance check-in (EMS-F-026/027 / TC-CHK-01/02)
+
+The SAD endpoint `POST /api/events/:id/checkin` accepts `{regCode}`. QR codes
+contain that same registration code, with no user details or session token.
+The organizer screen supports manual entry, camera scan and local image decoding;
+reading a QR fills the form and requires explicit submission for the selected event.
+A QR receipt is shown after registration; save it for entry. The existing
+`GET /api/registrations/me` continues to expose codes for future My Registrations UI.
+
+The interval is inclusive from one hour before start through the event end,
+using server time. Only the owning Organizer and Confirmed registrations qualify.
+A private event attendance-version field serializes check-in with cancellation
+and edits. Check-in leaves seatsTaken unchanged: Checked-in attendees still occupy
+their booked seats, avoiding new capacity after attendance is recorded.
+
+Camera use requires localhost or HTTPS and browser permission; uploaded QR images
+and manual entry are available as fallbacks. Camera decoding/cleanup was tested
+with a simulated video stream; physical-device permission behavior remains a
+manual browser/device check. See CHECK_IN.md for reproduction.
