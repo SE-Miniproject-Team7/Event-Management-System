@@ -216,8 +216,8 @@ async function seed() {
 }
 
 seed()
-  .catch((error) => {
-    console.error('Seed failed:', error.message);
+  .catch(() => {
+    console.error('Seed failed. Check database configuration, connectivity and seed input.');
     process.exitCode = 1;
   })
   .finally(async () => {

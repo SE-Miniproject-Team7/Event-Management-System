@@ -40,7 +40,7 @@ describe('Authentication', () => {
     jest.clearAllMocks();
 
     user = {
-      _id: 'user123',
+      _id: '64b0000000000000000000a1',
       name: 'Test User',
       email: 'test@example.com',
       role: 'Attendee',
@@ -69,7 +69,7 @@ describe('Authentication', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.user).toEqual({
-      id: 'user123',
+      id: '64b0000000000000000000a1',
       name: 'Test User',
       role: 'Attendee',
     });
@@ -93,7 +93,7 @@ describe('Authentication', () => {
 
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-    expect(payload.id).toBe('user123');
+    expect(payload.id).toBe('64b0000000000000000000a1');
     expect(payload.exp - payload.iat).toBe(3600);
   });
 
@@ -248,7 +248,7 @@ describe('Authentication', () => {
 
   test('tampered token is rejected', async () => {
     const token = jwt.sign(
-      { id: 'user123', role: 'Attendee' },
+      { id: '64b0000000000000000000a1', role: 'Attendee' },
       process.env.JWT_SECRET,
       { expiresIn: '60m' }
     );
@@ -267,7 +267,7 @@ describe('Authentication', () => {
 
   test('expired token is rejected', async () => {
     const token = jwt.sign(
-      { id: 'user123', role: 'Attendee' },
+      { id: '64b0000000000000000000a1', role: 'Attendee' },
       process.env.JWT_SECRET,
       { expiresIn: -1 }
     );
@@ -281,13 +281,13 @@ describe('Authentication', () => {
 
   test('token for a deactivated user is rejected', async () => {
     User.findById.mockResolvedValueOnce({
-      _id: 'user123',
+      _id: '64b0000000000000000000a1',
       active: false,
       role: 'Attendee',
     });
 
     const token = jwt.sign(
-      { id: 'user123', role: 'Attendee' },
+      { id: '64b0000000000000000000a1', role: 'Attendee' },
       process.env.JWT_SECRET,
       { expiresIn: '60m' }
     );
@@ -301,7 +301,7 @@ describe('Authentication', () => {
 
   test('GET /api/auth/me returns the authenticated user', async () => {
     const token = jwt.sign(
-      { id: 'user123', role: 'Attendee' },
+      { id: '64b0000000000000000000a1', role: 'Attendee' },
       process.env.JWT_SECRET,
       { expiresIn: '60m' }
     );
@@ -312,7 +312,7 @@ describe('Authentication', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.user).toEqual({
-      id: 'user123',
+      id: '64b0000000000000000000a1',
       name: 'Test User',
       role: 'Attendee',
     });

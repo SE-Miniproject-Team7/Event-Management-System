@@ -22,7 +22,7 @@ const valid = { name: 'Test Attendee', email: 'attendee@example.com', password: 
 beforeEach(() => {
   jest.resetAllMocks();
   User.findOne.mockResolvedValue(null);
-  User.create.mockImplementation(async (data) => ({ _id: 'user123', ...data }));
+  User.create.mockImplementation(async (data) => ({ _id: '64b0000000000000000000a1', ...data }));
 });
 
 describe('Account registration (TC-AUTH-01, TC-AUTH-02, TC-SEC-01)', () => {
@@ -33,7 +33,7 @@ describe('Account registration (TC-AUTH-01, TC-AUTH-02, TC-SEC-01)', () => {
     });
 
     expect(res.status).toBe(201);
-    expect(res.body).toEqual({ id: 'user123', name: 'Test Attendee', role: 'Attendee' });
+    expect(res.body).toEqual({ id: '64b0000000000000000000a1', name: 'Test Attendee', role: 'Attendee' });
     expect(User.findOne).toHaveBeenCalledWith({ email: 'attendee@example.com' });
     const saved = User.create.mock.calls[0][0];
     expect(saved).toMatchObject({
@@ -119,7 +119,7 @@ describe('Account registration (TC-AUTH-01, TC-AUTH-02, TC-SEC-01)', () => {
   test('a newly registered user can log in and access their authenticated profile', async () => {
     let storedUser;
     User.create.mockImplementation(async (data) => {
-      storedUser = { _id: 'user123', ...data, save: jest.fn().mockResolvedValue(undefined) };
+      storedUser = { _id: '64b0000000000000000000a1', ...data, save: jest.fn().mockResolvedValue(undefined) };
       return storedUser;
     });
     const signup = await request(app).post('/api/auth/register').send(valid);

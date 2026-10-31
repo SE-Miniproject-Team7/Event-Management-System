@@ -19,11 +19,12 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: '10kb' }));
-app.use(cookieParser());
-
+// Count API attempts before parsing, including malformed/oversized bodies.
 app.use('/api', createApiLimiter());
 app.post('/api/auth/login', createLoginLimiter());
+
+app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 app.get('/health', (req, res) =>
   res.json({
