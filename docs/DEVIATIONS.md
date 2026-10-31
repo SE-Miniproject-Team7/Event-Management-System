@@ -36,3 +36,12 @@ The reporting window is today in IST (partial, through the request time) plus
 Registration counts use creation time and include every registration status;
 user totals include active and inactive accounts. The Admin screen labels this
 scope and offers exact daily values alongside the visual chart.
+
+## Security audit logging (EMS-SEC-006 / TC-SEC-05)
+
+See [AUDIT_LOGGING.md](AUDIT_LOGGING.md) for events, failure behavior, privacy,
+90-day TTL retention and verification. Unknown login attempts use null user ID
+because no authenticated actor exists; no attempted email or credentials are
+stored. Mutation audit entries share their transaction with the domain write.
+Check-in logging has a tested shared hook, but actual endpoint integration and
+full TC-SEC-05 remain dependent on #29. Keep #40 open until that is verified.
