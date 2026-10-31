@@ -26,3 +26,13 @@ Differences between what was built and what the SRS, SAD and Test Plan (v1.0) de
   support transactions (replica set or Atlas), as required by registration too.
 - Seed/bootstrap scripts are operational tools outside this HTTP policy; do not
   use them concurrently with account administration.
+
+## Admin platform summary (EMS-F-030 / TC-RPT-02)
+
+`GET /api/admin/summary` follows SAD 4.3.4 and returns `eventsByStatus`,
+`usersByRole`, and `registrationsPerDay` (30 `{date, count}` entries).
+The reporting window is today in IST (partial, through the request time) plus
+29 previous IST calendar days. Empty days/statuses/roles return zero.
+Registration counts use creation time and include every registration status;
+user totals include active and inactive accounts. The Admin screen labels this
+scope and offers exact daily values alongside the visual chart.

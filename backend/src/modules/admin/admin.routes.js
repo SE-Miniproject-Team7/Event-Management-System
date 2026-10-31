@@ -3,11 +3,17 @@ const mongoose = require('mongoose');
 const Category = require('../../models/Category');
 const User = require('../../models/User');
 const withAdminLock = require('./withAdminLock');
+const getSummary = require('../reports/summary.service');
 const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
 
 router.use(authenticate, requireRole('Admin'));
+
+// EMS-F-030 / TC-RPT-02: aggregate counts only; no account or attendee details.
+router.get('/summary', asyncHandler(async (req, res) => {
+  res.json(await getSummary());
+}));
 
 // Admin discovery exposes only the fields needed to manage accounts.
 const publicUser = user => ({

@@ -1,0 +1,21 @@
+.summary-page { width: min(1100px, 100%); margin: 2rem auto; padding: 0 1.2rem; box-sizing: border-box; color: #17335b; }
+.summary-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.summary-heading h1 { margin: .3rem 0; font-size: 2rem; }
+.summary-heading p { color: #526581; }
+.summary-group { margin-top: 1.5rem; padding: 1.5rem; border: 1px solid #dce5ef; background: #fff; border-radius: 16px; }
+.summary-group h2 { margin: 0 0 1rem; font-size: 1.15rem; }
+.summary-counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin: 0; }
+.summary-counts > div { padding: 1rem; border-radius: 10px; background: #f1f6ff; }
+.summary-counts dt { color: #526581; font-size: .9rem; }
+.summary-counts dd { margin: .5rem 0 0; font-size: 2rem; font-weight: 700; color: #1d4ed8; }
+.summary-total strong { font-size: 2rem; color: #1d4ed8; }
+.summary-chart { display: flex; align-items: end; gap: 4px; height: 160px; padding-top: 1rem; border-bottom: 1px solid #cbd5e1; }
+.summary-bar-column { display: flex; align-items: end; flex: 1; height: 100%; min-width: 0; }
+.summary-bar { width: 100%; background: #2563eb; border-radius: 4px 4px 0 0; }
+.summary-axis { display: flex; justify-content: space-between; color: #526581; font-size: .85rem; margin-top: .5rem; }
+.summary-table { margin-top: 1.5rem; }
+.summary-table summary { cursor: pointer; color: #1d4ed8; padding: .5rem 0; }
+.summary-table table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.summary-table caption { text-align: left; padding-bottom: .75rem; }
+.summary-table th, .summary-table td { text-align: left; padding: .6rem; border-bottom: 1px solid #e2e8f0; }
+@media (max-width: 600px) { .summary-group { padding: 1rem; } .summary-chart { gap: 2px; } }

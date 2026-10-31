@@ -9,6 +9,9 @@ const regSchema = new mongoose.Schema({
   checkedInAt: { type: Date, default: null },
 }, { timestamps: true });
 
+// Bounds the 30-day platform summary scan.
+regSchema.index({ createdAt: 1 });
+
 regSchema.index(
   { eventId: 1, userId: 1 },
   { unique: true, partialFilterExpression: { status: { $in: ['Confirmed', 'Waitlisted', 'Checked-in'] } } }
