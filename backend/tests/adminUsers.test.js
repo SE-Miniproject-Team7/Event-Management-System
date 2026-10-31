@@ -1,3 +1,4 @@
+jest.mock('../src/modules/audit/audit.service', () => ({ recordAudit: jest.fn(), recordCheckIn: jest.fn() }));
 process.env.JWT_SECRET = 'test-secret-for-admin-users';
 
 const request = require('supertest');
@@ -187,4 +188,19 @@ describe('Admin discovery and last administrator policy', () => {
     const res = await request(app).patch(`/api/admin/users/${ADMIN_ID}`).set('Cookie', adminCookie()).send({ role: 'Admin', active: true });
     expect(res.status).toBe(200);
   });
+});
+
+test('same-role no-op does not create a role-change audit entry', async () => {
+  const { recordAudit } = require('../src/modules/audit/audit.service');
+  const res = await update({ role: 'Attendee' });
+  expect(res.status).toBe(200);
+  expect(recordAudit).not.toHaveBeenCalled();
+});
+test('role changes identify the administrator and affected account', async () => {
+  const { recordAudit } = require('../src/modules/audit/audit.service');
+  const res = await update({ role: 'Organizer' });
+  expect(res.status).toBe(200);
+  expect(recordAudit).toHaveBeenCalledTimes(1);
+  expect(recordAudit).toHaveBeenCalledWith(expect.objectContaining({ user: expect.objectContaining({ _id: ADMIN_ID }) }),
+    'USER_ROLE_CHANGED', expect.objectContaining({ targetId: USER_ID, targetType: 'User' }));
 });

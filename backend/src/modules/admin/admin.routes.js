@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Category = require('../../models/Category');
 const User = require('../../models/User');
 const withAdminLock = require('./withAdminLock');
+const { recordAudit } = require('../audit/audit.service');
 const getSummary = require('../reports/summary.service');
 const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
@@ -92,8 +93,14 @@ router.patch('/users/:id', asyncHandler(async (req, res) => {
     if (removesAdmin && await User.countDocuments({ role: 'Admin', active: true }, { session }) <= 1) {
       throw new AppError(409, 'LAST_ACTIVE_ADMIN', 'Keep at least one active administrator');
     }
-    return User.findByIdAndUpdate(req.params.id, { $set: changes },
+    const previousRole = target.role;
+    const previousActive = target.active;
+    const updated = await User.findByIdAndUpdate(req.params.id, { $set: changes },
       { returnDocument: 'after', runValidators: true, session });
+    const context = { targetId: target._id, targetType: 'User', session };
+    if (previousRole !== updated.role) await recordAudit(req, 'USER_ROLE_CHANGED', context);
+    if (previousActive !== updated.active) await recordAudit(req, 'USER_ACTIVITY_CHANGED', context);
+    return updated;
   });
   res.json({ user: publicUser(user) });
 }));

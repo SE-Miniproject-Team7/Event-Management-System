@@ -7,6 +7,7 @@ const Registration = require('../../models/Registration');
 const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
+const { recordAudit } = require('../audit/audit.service');
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const withRemaining = (e) => ({ ...e.toObject(), remainingSeats: e.capacity - e.seatsTaken });
@@ -129,21 +130,27 @@ router.get('/:id', asyncHandler(async (req, res) => {
 router.patch('/:id/approval', authenticate, requireRole('Admin'), asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) throw notFound();
   const { decision, reason } = req.body || {};
-  const event = await Event.findById(req.params.id);
-  if (!event) throw notFound();
-  if (event.status !== 'Pending Approval') throw new AppError(409, 'NOT_PENDING', 'Event is not pending approval');
-  if (decision === 'approve') {
-    event.status = 'Published';
-  } else if (decision === 'reject') {
-    if (typeof reason !== 'string' || reason.trim().length < 10) {
-      throw new AppError(422, 'VALIDATION_ERROR', 'Reason must be at least 10 characters', [{ field: 'reason', message: 'Min 10 characters' }]);
+  const event = await mongoose.connection.transaction(async session => {
+    const event = await Event.findById(req.params.id, null, { session });
+    if (!event) throw notFound();
+    if (event.status !== 'Pending Approval') throw new AppError(409, 'NOT_PENDING', 'Event is not pending approval');
+    if (decision === 'approve') {
+      event.status = 'Published';
+    } else if (decision === 'reject') {
+      if (typeof reason !== 'string' || reason.trim().length < 10) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Reason must be at least 10 characters', [{ field: 'reason', message: 'Min 10 characters' }]);
+      }
+      event.status = 'Rejected';
+      event.rejectionReason = reason.trim();
+    } else {
+      throw new AppError(422, 'VALIDATION_ERROR', 'decision must be approve or reject', [{ field: 'decision', message: 'approve or reject' }]);
     }
-    event.status = 'Rejected';
-    event.rejectionReason = reason.trim();
-  } else {
-    throw new AppError(422, 'VALIDATION_ERROR', 'decision must be approve or reject', [{ field: 'decision', message: 'approve or reject' }]);
-  }
-  await event.save();
+    await event.save({ session });
+    await recordAudit(req, decision === 'approve' ? 'EVENT_APPROVED' : 'EVENT_REJECTED', {
+      targetId: event._id, targetType: 'Event', session,
+    });
+    return event;
+  });
   res.json({ event });
 }));
 
@@ -174,6 +181,7 @@ router.post('/:id/cancel', authenticate, requireRole('Organizer'), asyncHandler(
       event.status = 'Cancelled';
       event.seatsTaken = 0;
       await event.save({ session });
+      await recordAudit(req, 'EVENT_CANCELLED', { targetId: event._id, targetType: 'Event', session });
     });
   } finally {
     await session.endSession();

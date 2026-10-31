@@ -1,3 +1,4 @@
+jest.mock('../src/modules/audit/audit.service', () => ({ recordAudit: jest.fn(), recordCheckIn: jest.fn() }));
 process.env.JWT_SECRET = 'test-secret-for-account-registration';
 
 const express = require('express');
