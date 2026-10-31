@@ -35,6 +35,7 @@ app.get('/health', (req, res) =>
 app.use('/api/auth', require('./modules/auth/auth.routes'));
 app.use('/api/categories', require('./modules/categories/categories.routes'));
 app.use('/api/events', require('./modules/events/events.routes'));
+app.use('/api/events', require('./modules/attendance/attendance.routes'));
 app.use('/api', require('./modules/registrations/registrations.routes'));
 app.use('/api/admin', require('./modules/admin/admin.routes'));
 

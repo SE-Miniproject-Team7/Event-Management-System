@@ -23,7 +23,7 @@ async function recordAudit(req, action, options = {}) {
     throw new AppError(503, 'AUDIT_UNAVAILABLE', 'Security logging is temporarily unavailable. Please try again.');
   }
 }
-// #29 must call this once inside its successful check-in transaction.
+// The attendance endpoint calls this once inside its successful transaction.
 function recordCheckIn(req, registration, session) {
   if (registration.status !== 'Checked-in' || !registration.checkedInAt) {
     throw new TypeError('Only completed check-ins can be audited');

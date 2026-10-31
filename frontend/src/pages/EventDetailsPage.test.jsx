@@ -59,6 +59,7 @@ describe('event details API contract', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Register for Event' }))
     expect(await screen.findByText(/Registration successful/)).toBeTruthy()
+    expect(screen.getByRole('img', { name: 'QR code for REG-001' })).toBeTruthy()
     await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2))
     expect(await screen.findByText((_, element) => element.tagName === 'P' && element.textContent.includes('Seats remaining:') && element.textContent.includes('37'))).toBeTruthy()
   })

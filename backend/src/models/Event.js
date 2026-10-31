@@ -11,6 +11,8 @@ const eventSchema = new mongoose.Schema({
   registrationDeadline: { type: Date, required: true },
   capacity: { type: Number, required: true, min: 1, max: 10000 },
   seatsTaken: { type: Number, default: 0 },
+  // Internal write guard for check-in versus event cancellation/editing.
+  attendanceVersion: { type: Number, select: false },
   status: { type: String, enum: ['Pending Approval', 'Published', 'Rejected', 'Cancelled'], default: 'Pending Approval' },
   rejectionReason: { type: String },
 }, { timestamps: true });
