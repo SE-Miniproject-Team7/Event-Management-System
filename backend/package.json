@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "jest --runInBand",
+    "test:coverage": "jest --runInBand --coverage --coverageDirectory=coverage --coverageReporters=text-summary --coverageReporters=lcov --collectCoverageFrom=src/modules/**/*.js",
     "test:integration": "node --test tests/lockout.integration.cjs tests/adminUsers.integration.cjs tests/adminSummary.integration.cjs tests/audit.integration.cjs tests/checkin.integration.cjs tests/security.integration.cjs",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
