@@ -42,8 +42,8 @@ describe('my registrations', () => {
     for (const item of registrations) {
       expect(await screen.findByRole('heading', { name: item.event.title })).toBeTruthy()
       expect(screen.getByText(item.status, { exact: true })).toBeTruthy()
-      expect(screen.getByText(/10 Nov 2027/)).toBeTruthy()
     }
+    expect(screen.getAllByText(/10 Nov 2027/)).toHaveLength(registrations.length)
     expect(screen.getByText(/Waitlist position:/)).toBeTruthy()
     expect(screen.getByText((_, element) => element.tagName === 'P' && element.textContent.includes('Waitlist position: 1'))).toBeTruthy()
   })
