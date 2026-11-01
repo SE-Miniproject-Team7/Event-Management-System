@@ -26,3 +26,15 @@ A web application for creating events, registering for them (with waitlist), sen
 ## Workflow
 
 Work from assigned issues on the Project board, use a feature branch, open a Pull Request (`Closes #<issue>`), and get it reviewed before merging to `main`.
+
+## Email notifications
+
+Event lifecycle emails use the MongoDB-backed notification queue; request handlers enqueue jobs rather than contacting SMTP directly. Jobs are written in the same transaction as the event/registration change, so an email cannot be queued for a transaction that rolls back.
+
+- **Registration confirmed:** attendee receives a confirmation and registration code.
+- **Event cancelled:** attendees with active registrations receive a cancellation email; their registrations are cancelled in the same transaction.
+- **Event approved/rejected:** the organizer receives the decision, including the rejection reason when applicable.
+- **Event updated:** registered attendees receive updated event details when an organizer edit is merged.
+
+The worker retries failed deliveries up to four attempts and stores each attempt in `NotificationLog`. Configure SMTP with `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and optional `SMTP_FROM`. Set `NOTIFICATION_WORKER_ENABLED=true` to enable the worker and optionally set `NOTIFICATION_RETRY_INTERVAL_MINUTES` to change the retry interval. Keep credentials in environment variables; never commit SMTP secrets.
+

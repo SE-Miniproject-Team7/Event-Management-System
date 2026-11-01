@@ -10,6 +10,7 @@ const User = require('../src/models/User');
 const Event = require('../src/models/Event');
 const Registration = require('../src/models/Registration');
 const AuditLog = require('../src/models/AuditLog');
+const NotificationJob = require('../src/models/NotificationJob');
 const { recordCheckIn } = require('../src/modules/audit/audit.service');
 const app = require('../src/app');
 
@@ -29,11 +30,11 @@ describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_UR
     if (!new URL(process.env.MONGO_TEST_URI).pathname.startsWith('/ems_test_')) throw new Error('Use a dedicated ems_test_* database');
     process.env.JWT_SECRET = randomUUID();
     await mongoose.connect(process.env.MONGO_TEST_URI, { dbName: testDb, serverSelectionTimeoutMS: 15000 });
-    await Promise.all([User.init(), Event.init(), Registration.init(), AuditLog.init()]);
+    await Promise.all([User.init(), Event.init(), Registration.init(), AuditLog.init(), NotificationJob.init()]);
     hash = await bcrypt.hash('AuditPassword123', 4);
   });
   beforeEach(async () => {
-    await Promise.all([User.deleteMany({}), Event.deleteMany({}), Registration.deleteMany({}), AuditLog.deleteMany({})]);
+    await Promise.all([User.deleteMany({}), Event.deleteMany({}), Registration.deleteMany({}), AuditLog.deleteMany({}), NotificationJob.deleteMany({})]);
     [admin, organizer, attendee] = await User.create(['Admin', 'Organizer', 'Attendee'].map((role, i) => ({
       name: `Audit ${role}`, email: `audit${i}@test.local`, role, active: true, passwordHash: hash,
     })));
@@ -80,8 +81,15 @@ describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_UR
     assert.deepEqual(logs.map(log => log.action), ['USER_ROLE_CHANGED', 'USER_ACTIVITY_CHANGED']);
     assert.ok(logs.every(log => String(log.userId) === String(admin._id) && String(log.targetId) === String(attendee._id)));
   });
-  it('records each successful approval, rejection and cancellation once', async () => {
+  it('queues decision emails for organizers and cancellation emails for registered attendees', async () => {
     const rejected = await Event.create(eventData('Pending Approval'));
+    await Registration.create({
+      eventId: pending._id,
+      userId: attendee._id,
+      regCode: 'EVENT-EMAIL-CANCEL',
+      status: 'Confirmed',
+    });
+
     assert.equal((await approval(pending, 'approve')).status, 200);
     assert.equal((await approval(rejected, 'reject')).status, 200);
     assert.equal((await cancel(pending)).status, 200);
@@ -89,10 +97,25 @@ describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_UR
     assert.equal((await approval(pending, 'approve')).status, 409);
     const denied = await request(app).patch(`/api/events/${published._id}/approval`).set('Cookie', cookie(attendee)).send({ decision: 'approve' });
     assert.equal(denied.status, 403);
+
     const logs = await AuditLog.find().sort({ _id: 1 });
     assert.deepEqual(logs.map(log => log.action), ['EVENT_APPROVED', 'EVENT_REJECTED', 'EVENT_CANCELLED']);
     assert.equal(String(logs[2].userId), String(organizer._id));
     assert.equal(String(logs[2].targetId), String(pending._id));
+
+    const jobs = await NotificationJob.find().sort({ type: 1 });
+    assert.equal(jobs.length, 3);
+    assert.deepEqual(jobs.map(job => job.type), ['EVENT_APPROVED', 'EVENT_CANCELLATION', 'EVENT_REJECTED']);
+    const approvedJob = jobs.find(job => job.type === 'EVENT_APPROVED');
+    assert.equal(approvedJob.recipient, organizer.email);
+    assert.equal(approvedJob.payload.eventTitle, pending.title);
+    const rejectedJob = jobs.find(job => job.type === 'EVENT_REJECTED');
+    assert.equal(rejectedJob.recipient, organizer.email);
+    assert.equal(rejectedJob.payload.rejectionReason, 'Not appropriate for this venue');
+    const cancelledJob = jobs.find(job => job.type === 'EVENT_CANCELLATION');
+    assert.equal(cancelledJob.recipient, attendee.email);
+    assert.equal(cancelledJob.payload.eventTitle, pending.title);
+    assert.equal(cancelledJob.payload.idempotencyKey, `event-cancellation:${pending._id}:${(await Registration.findOne({ regCode: 'EVENT-EMAIL-CANCEL' }))._id}`);
   });
   it('rolls back security changes if the audit write fails, and issues no login cookie', async () => {
     const registration = await Registration.create({ eventId: published._id, userId: attendee._id, regCode: 'ROLLBACK', status: 'Confirmed' });
