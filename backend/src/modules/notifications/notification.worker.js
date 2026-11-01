@@ -49,6 +49,78 @@ Thank you.`,
     };
   }
 
+  if (job.type === 'EVENT_CANCELLATION') {
+    const name = payload.attendeeName || 'Attendee';
+    const event = payload.eventTitle || 'your event';
+    const venue = payload.venue || 'the previously announced venue';
+    return {
+      subject: job.subject,
+      text: `Hello ${name},
+
+The event "${event}" has been cancelled by the organizer.
+Venue: ${venue}
+
+Your registration has also been cancelled. We apologize for the inconvenience.`,
+      html: `<p>Hello ${escapeHtml(name)},</p>
+        <p>The event <strong>${escapeHtml(event)}</strong> has been cancelled by the organizer.</p>
+        <p>Venue: ${escapeHtml(venue)}</p>
+        <p>Your registration has also been cancelled. We apologize for the inconvenience.</p>`,
+    };
+  }
+
+  if (job.type === 'EVENT_UPDATED') {
+    const name = payload.attendeeName || 'Attendee';
+    const event = payload.eventTitle || 'your event';
+    const venue = payload.venue || 'not specified';
+    const startAt = payload.startAt || 'not specified';
+    return {
+      subject: job.subject,
+      text: `Hello ${name},
+
+The details for "${event}" have changed.
+Venue: ${venue}
+Start time: ${startAt}
+
+Please review the updated event details before attending.`,
+      html: `<p>Hello ${escapeHtml(name)},</p>
+        <p>The details for <strong>${escapeHtml(event)}</strong> have changed.</p>
+        <p>Venue: ${escapeHtml(venue)}<br>Start time: ${escapeHtml(startAt)}</p>
+        <p>Please review the updated event details before attending.</p>`,
+    };
+  }
+
+  if (job.type === 'EVENT_APPROVED') {
+    const name = payload.organizerName || 'Organizer';
+    const event = payload.eventTitle || 'your event';
+    return {
+      subject: job.subject,
+      text: `Hello ${name},
+
+Your event "${event}" has been approved and is now published.`,
+      html: `<p>Hello ${escapeHtml(name)},</p>
+        <p>Your event <strong>${escapeHtml(event)}</strong> has been approved and is now published.</p>`,
+    };
+  }
+
+  if (job.type === 'EVENT_REJECTED') {
+    const name = payload.organizerName || 'Organizer';
+    const event = payload.eventTitle || 'your event';
+    const reason = payload.rejectionReason || 'No reason provided';
+    return {
+      subject: job.subject,
+      text: `Hello ${name},
+
+Your event "${event}" was not approved.
+Reason: ${reason}
+
+Please review the feedback and update your submission if needed.`,
+      html: `<p>Hello ${escapeHtml(name)},</p>
+        <p>Your event <strong>${escapeHtml(event)}</strong> was not approved.</p>
+        <p>Reason: ${escapeHtml(reason)}</p>
+        <p>Please review the feedback and update your submission if needed.</p>`,
+    };
+  }
+
   throw new Error('Unsupported notification template');
 }
 
