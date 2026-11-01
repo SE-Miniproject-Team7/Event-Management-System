@@ -243,7 +243,7 @@ describe('Notification worker', () => {
   test.each([
     ['EVENT_CANCELLATION', { attendeeName: '<Attendee>', eventTitle: '<Cancelled Event>', venue: 'Hall A' }, 'cancelled by the organizer', '&lt;Cancelled Event&gt;'],
     ['EVENT_UPDATED', { attendeeName: 'Attendee', eventTitle: 'Updated Event', venue: 'Hall B', startAt: '2026-12-01T10:00:00Z' }, 'details for "Updated Event" have changed', 'Hall B'],
-    ['EVENT_APPROVED', { organizerName: 'Organizer', eventTitle: 'Approved Event' }, 'approved and is now published', '&lt;Approved Event&gt;'],
+    ['EVENT_APPROVED', { organizerName: 'Organizer', eventTitle: '<Approved Event>' }, 'approved and is now published', '&lt;Approved Event&gt;'],
     ['EVENT_REJECTED', { organizerName: 'Organizer', eventTitle: 'Rejected Event', rejectionReason: '<Update the venue>' }, 'was not approved', '&lt;Update the venue&gt;'],
   ])('renders the %s lifecycle email safely', async (type, payload, expectedText, expectedHtml) => {
     NotificationJob.findOneAndUpdate.mockResolvedValueOnce({
