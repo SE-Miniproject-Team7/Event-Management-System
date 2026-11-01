@@ -153,18 +153,18 @@ router.patch('/:id', authenticate, requireRole('Organizer'), asyncHandler(async 
       description: body.description === undefined ? event.description : body.description,
       categoryId: body.categoryId === undefined ? String(event.categoryId) : body.categoryId,
       venue: body.venue === undefined ? event.venue : body.venue,
-      startAt: new Date(body.startAt === undefined ? event.startAt : body.startAt),
-      endAt: new Date(body.endAt === undefined ? event.endAt : body.endAt),
-      registrationDeadline: new Date(body.registrationDeadline === undefined ? event.registrationDeadline : body.registrationDeadline),
+      startAt: body.startAt === undefined ? event.startAt : parseDate(body.startAt),
+      endAt: body.endAt === undefined ? event.endAt : parseDate(body.endAt),
+      registrationDeadline: body.registrationDeadline === undefined ? event.registrationDeadline : parseDate(body.registrationDeadline),
       capacity: body.capacity === undefined ? event.capacity : body.capacity,
     };
     const fields = [];
     if (typeof next.title !== 'string' || next.title.trim().length < 3 || next.title.trim().length > 100) fields.push({ field: 'title', message: 'Title must be 3 to 100 characters' });
     if (typeof next.description !== 'string' || !next.description.trim() || next.description.trim().length > 2000) fields.push({ field: 'description', message: 'Description is required (max 2000 characters)' });
     if (typeof next.venue !== 'string' || !next.venue.trim() || next.venue.trim().length > 100) fields.push({ field: 'venue', message: 'Venue is required (max 100 characters)' });
-    if (isNaN(next.startAt) || next.startAt <= new Date()) fields.push({ field: 'startAt', message: 'Start date must be in the future' });
-    if (isNaN(next.endAt) || next.endAt <= next.startAt) fields.push({ field: 'endAt', message: 'End must be after start' });
-    if (isNaN(next.registrationDeadline) || next.registrationDeadline > next.startAt) fields.push({ field: 'registrationDeadline', message: 'Deadline must be on or before the start' });
+    if (isNaN(next.startAt) || next.startAt <= new Date()) fields.push({ field: 'startAt', message: 'Start date must be a valid future date' });
+    if (isNaN(next.endAt) || next.endAt <= next.startAt) fields.push({ field: 'endAt', message: 'End date must be valid and after start' });
+    if (isNaN(next.registrationDeadline) || next.registrationDeadline > next.startAt) fields.push({ field: 'registrationDeadline', message: 'Deadline must be a valid date on or before the start' });
     if (!Number.isInteger(next.capacity) || next.capacity < 1 || next.capacity > 10000 || next.capacity < event.seatsTaken) {
       fields.push({ field: 'capacity', message: 'Capacity must be 1 to 10000 and cannot be below current registrations' });
     }
