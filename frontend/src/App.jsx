@@ -102,6 +102,7 @@ function App() {
           <Link to="/">Home</Link>
           <Link to="/events">Explore Events</Link>
           <Link to="/organizer/events/new">Create Event</Link>
+          {user?.role === 'Organizer' && <Link to="/my-events">My Events</Link>}
           {user?.role === 'Attendee' && <Link to="/registrations/me">My registrations</Link>}
           {user?.role === 'Organizer' && <Link to="/organizer/checkin">Check in attendees</Link>}
           <Link to="/admin/events/pending">Admin Approvals</Link>
