@@ -11,7 +11,7 @@ const getSummary = require('../src/modules/reports/summary.service');
 const app = require('../src/app');
 
 describe('Admin summary with real MongoDB (TC-RPT-02)', { skip: !process.env.MONGO_TEST_URI, timeout: 30000 }, () => {
-  const testDb = `ems_test_summary_${randomUUID().replaceAll('-', '')}`;
+  const testDb = `ems_test_summary_${randomUUID().replaceAll('-', '').slice(0, 12)}`;
   const previousSecret = process.env.JWT_SECRET;
   before(async () => {
     if (!new URL(process.env.MONGO_TEST_URI).pathname.startsWith('/ems_test_')) {

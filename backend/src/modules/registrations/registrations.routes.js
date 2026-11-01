@@ -1,24 +1,30 @@
+
 const router = require('express').Router();
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Event = require('../../models/Event');
 const Registration = require('../../models/Registration');
 const User = require('../../models/User');
-const { sendWaitlistPromotion } = require('./email.service');
 const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
+const {
+  enqueueNotification,
+} = require('../notifications/notification.service');
 
 const ACTIVE = ['Confirmed', 'Waitlisted', 'Checked-in'];
 const CANCELLABLE = ['Confirmed', 'Waitlisted'];
 
 async function inTransaction(work) {
   const session = await mongoose.startSession();
+
   try {
     let result;
+
     await session.withTransaction(async () => {
       result = await work(session);
     });
+
     return result;
   } finally {
     await session.endSession();
@@ -32,6 +38,7 @@ function registrationCode() {
 // Register an attendee for an event.
 router.post('/events/:id/registrations', authenticate, requireRole('Attendee'), asyncHandler(async (req, res) => {
   const { id } = req.params;
+
   if (!mongoose.isValidObjectId(id)) {
     throw new AppError(404, 'NOT_FOUND', 'Event not found');
   }
@@ -39,7 +46,10 @@ router.post('/events/:id/registrations', authenticate, requireRole('Attendee'), 
   try {
     const result = await inTransaction(async (session) => {
       const event = await Event.findById(id).session(session);
-      if (!event) throw new AppError(404, 'NOT_FOUND', 'Event not found');
+
+      if (!event) {
+        throw new AppError(404, 'NOT_FOUND', 'Event not found');
+      }
 
       if (event.status !== 'Published' || new Date() > event.registrationDeadline) {
         throw new AppError(409, 'EVENT_CLOSED', 'Registration is closed for this event');
@@ -68,6 +78,20 @@ router.post('/events/:id/registrations', authenticate, requireRole('Attendee'), 
           regCode: registrationCode(),
           status: 'Confirmed',
         }], { session });
+
+        // Save the email job in the SAME transaction as the registration.
+        await enqueueNotification({
+          type: 'REGISTRATION_CONFIRMATION',
+          recipient: req.user.email,
+          subject: `Registration confirmed: ${event.title}`,
+          payload: {
+            idempotencyKey: `registration:${reg._id}`,
+            attendeeName: req.user.name || 'Attendee',
+            eventTitle: event.title,
+            regCode: reg.regCode,
+          },
+          session,
+        });
 
         return {
           registrationId: reg._id,
@@ -102,6 +126,7 @@ router.post('/events/:id/registrations', authenticate, requireRole('Attendee'), 
     if (err.code === 11000) {
       throw new AppError(409, 'DUPLICATE_REGISTRATION', 'Already registered');
     }
+
     throw err;
   }
 }));
@@ -115,6 +140,7 @@ router.get('/registrations/me', authenticate, requireRole('Attendee'), asyncHand
     if (!allowedStatuses.includes(req.query.status)) {
       throw new AppError(400, 'INVALID_STATUS', 'Invalid registration status');
     }
+
     filter.status = req.query.status;
   }
 
@@ -140,14 +166,17 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
     throw new AppError(404, 'NOT_FOUND', 'Registration not found');
   }
 
-  let promotion = null;
   await inTransaction(async (session) => {
     const reg = await Registration.findById(req.params.id).session(session);
 
-    if (!reg) throw new AppError(404, 'NOT_FOUND', 'Registration not found');
+    if (!reg) {
+      throw new AppError(404, 'NOT_FOUND', 'Registration not found');
+    }
+
     if (!reg.userId.equals(req.user._id)) {
       throw new AppError(403, 'FORBIDDEN', 'Not your registration');
     }
+
     if (!CANCELLABLE.includes(reg.status)) {
       throw new AppError(409, 'CANCEL_NOT_ALLOWED', 'This registration cannot be cancelled');
     }
@@ -171,23 +200,44 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
         { sort: { createdAt: 1 }, new: false, session }
       );
 
-        // The promoted attendee left the waitlist, so everyone behind moves up one place.
-        if (promoted && Number.isInteger(promoted.waitlistPosition)) {
-          await Registration.updateMany(
-            {
-              eventId: reg.eventId,
-              status: 'Waitlisted',
-              waitlistPosition: { $gt: promoted.waitlistPosition },
-            },
-            { $inc: { waitlistPosition: -1 } },
-            { session }
-          );
-        }
+      // The promoted attendee left the waitlist, so everyone behind moves up one place.
+      if (promoted && Number.isInteger(promoted.waitlistPosition)) {
+        await Registration.updateMany(
+          {
+            eventId: reg.eventId,
+            status: 'Waitlisted',
+            waitlistPosition: { $gt: promoted.waitlistPosition },
+          },
+          { $inc: { waitlistPosition: -1 } },
+          { session }
+        );
+      }
 
       // A promotion replaces the cancelled confirmed attendee, so seatsTaken
-      // stays unchanged. If nobody is waiting, release the seat.
+      // stays unchanged. Queue the email in this transaction so the promotion
+      // cannot commit without its notification.
       if (promoted) {
-        promotion = { userId: promoted.userId, eventId: reg.eventId };
+        const attendee = await User.findById(promoted.userId)
+          .select('name email')
+          .session(session);
+
+        if (!attendee?.email) {
+          throw new Error('Promoted attendee has no notification address');
+        }
+
+        await enqueueNotification({
+          type: 'WAITLIST_PROMOTION',
+          recipient: attendee.email,
+          subject: `Your waitlist place is confirmed: ${event.title}`,
+          payload: {
+            idempotencyKey: `waitlist-promotion:${reg.eventId}:${promoted._id}`,
+            attendeeName: attendee.name || 'Attendee',
+            eventTitle: event.title,
+            startAt: event.startAt,
+            venue: event.venue || '',
+          },
+          session,
+        });
       }
 
       if (!promoted) {
@@ -214,27 +264,6 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
       );
     }
   });
-
-  if (promotion?.userId) {
-    try {
-      const [attendee, event] = await Promise.all([
-        User.findById(promotion.userId, 'name email'),
-        Event.findById(promotion.eventId, 'title startAt venue'),
-      ]);
-      if (attendee?.email && event) {
-        await sendWaitlistPromotion({
-          to: attendee.email,
-          name: attendee.name,
-          eventTitle: event.title,
-          startAt: event.startAt,
-          venue: event.venue,
-        });
-      }
-    } catch {
-      // A mail failure must not roll back a committed promotion or cancellation.
-      console.warn(JSON.stringify({ level: 'warn', event: 'waitlist_promotion_email_failed' }));
-    }
-  }
 
   res.json({ status: 'Cancelled' });
 }));

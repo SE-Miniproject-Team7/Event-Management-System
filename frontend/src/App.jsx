@@ -13,10 +13,12 @@ import AdminUsersPage from './pages/AdminUsersPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import CreateEventPage from './pages/CreateEventPage.jsx'
 import PendingEventsPage from './pages/PendingEventsPage.jsx'
+import PasswordResetPage from './pages/PasswordResetPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import EventsPage from './pages/EventsPage.jsx'
 import EventDetailsPage from './pages/EventDetailsPage.jsx'
+import MyRegistrationsPage from './pages/MyRegistrationsPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import api from './services/api'
 import './App.css'
@@ -100,6 +102,7 @@ function App() {
           <Link to="/">Home</Link>
           <Link to="/events">Explore Events</Link>
           <Link to="/organizer/events/new">Create Event</Link>
+          {user?.role === 'Attendee' && <Link to="/registrations/me">My registrations</Link>}
           {user?.role === 'Organizer' && <Link to="/organizer/checkin">Check in attendees</Link>}
           <Link to="/admin/events/pending">Admin Approvals</Link>
           {user?.role === 'Admin' && <>
@@ -152,9 +155,12 @@ function App() {
             path="/login"
             element={<LoginPage onLoginSuccess={setUser} />}
           />
+          <Route path="/forgot-password" element={<PasswordResetPage key="forgot" />} />
+          <Route path="/reset-password" element={<PasswordResetPage key="reset" reset />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
+          <Route path="/registrations/me" element={<MyRegistrationsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

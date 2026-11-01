@@ -11,7 +11,7 @@ const Event = require('../src/models/Event');
 const AuditLog = require('../src/models/AuditLog');
 const app = require('../src/app');
 describe('Security pass against real MongoDB (TC-SEC-01/03/06)', { skip: !process.env.MONGO_TEST_URI, timeout: 30000 }, () => {
-  const dbName = `ems_test_security_${randomUUID().replaceAll('-', '')}`;
+  const dbName = `ems_test_security_${randomUUID().replaceAll('-', '').slice(0, 12)}`;
   const oldSecret = process.env.JWT_SECRET, oldEnv = process.env.NODE_ENV;
   let organizer, attendee, category, hash, logs;
   const oldError = console.error;
