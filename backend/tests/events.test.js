@@ -1,4 +1,5 @@
 jest.mock('../src/modules/audit/audit.service', () => ({ recordAudit: jest.fn(), recordCheckIn: jest.fn() }));
+jest.mock('../src/modules/notifications/notification.service', () => ({ enqueueNotification: jest.fn() }));
 process.env.JWT_SECRET = 'test-secret-for-events';
 
 const request = require('supertest');
@@ -22,6 +23,7 @@ const User = require('../src/models/User');
 const Category = require('../src/models/Category');
 const Event = require('../src/models/Event');
 const Registration = require('../src/models/Registration');
+const { enqueueNotification } = require('../src/modules/notifications/notification.service');
 const app = require('../src/app');
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -316,12 +318,25 @@ describe('organizer edits own event (EMS-F-011)', () => {
 
   beforeEach(() => {
     Category.findOne.mockResolvedValue({ _id: CAT_ID, name: 'Workshop', active: true });
+    Registration.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        session: jest.fn().mockResolvedValue([]),
+      }),
+    });
   });
 
-  test('owner can update event fields and published events return to approval', async () => {
+  test('owner can update event fields, notify attendees and return published events to approval', async () => {
     const { cookie } = loginAs('Organizer');
     const event = makeEvent({ status: 'Published' });
     Event.findById.mockResolvedValue(event);
+    Registration.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        session: jest.fn().mockResolvedValue([{
+          _id: 'registration-update-1',
+          userId: { name: 'Test Attendee', email: 'attendee@example.com' },
+        }]),
+      }),
+    });
     const res = await edit(cookie, { title: '  Updated Hack Night  ', venue: '  Hall B  ' });
     expect(res.status).toBe(200);
     expect(event.title).toBe('Updated Hack Night');
@@ -331,6 +346,18 @@ describe('organizer edits own event (EMS-F-011)', () => {
     expect(require('../src/modules/audit/audit.service').recordAudit).toHaveBeenCalledWith(
       expect.anything(), 'EVENT_UPDATED', expect.objectContaining({ targetId: EVENT_ID, targetType: 'Event' })
     );
+    expect(enqueueNotification).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'EVENT_UPDATED',
+      recipient: 'attendee@example.com',
+      payload: expect.objectContaining({
+        idempotencyKey: expect.stringContaining(`event-updated:${EVENT_ID}`),
+        attendeeName: 'Test Attendee',
+        eventTitle: 'Updated Hack Night',
+        venue: 'Hall B',
+        awaitingApproval: true,
+      }),
+      session: undefined,
+    }));
   });
 
   test('another organizer cannot edit the event', async () => {
