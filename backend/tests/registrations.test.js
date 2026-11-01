@@ -197,7 +197,8 @@ describe('Attendee registration API', () => {
       _id: 'oldest-waitlisted', userId: '64b000000000000000000003', waitlistPosition: 1,
     });
     User.findById.mockResolvedValue({ name: 'Waitlisted Attendee', email: 'waitlist@test.local' });
-    Event.findById.mockReturnValue(query({ title: 'Design Week', startAt: new Date('2027-01-01T10:00:00Z'), venue: 'Hall A' }));
+    const promotionEvent = { title: 'Design Week', startAt: new Date('2027-01-01T10:00:00Z'), venue: 'Hall A' };
+    Event.findById.mockImplementation((_id, projection) => projection ? Promise.resolve(promotionEvent) : query(promotionEvent));
 
     const res = await request(app).delete(`/api/registrations/${REG_ID}`);
 
