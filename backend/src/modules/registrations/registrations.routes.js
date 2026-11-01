@@ -152,6 +152,11 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
       throw new AppError(409, 'CANCEL_NOT_ALLOWED', 'This registration cannot be cancelled');
     }
 
+    const event = await Event.findById(reg.eventId).session(session);
+    if (!event || !event.startAt || new Date(event.startAt) <= new Date()) {
+      throw new AppError(409, 'CANCEL_NOT_ALLOWED', 'Registration cannot be cancelled after the event starts');
+    }
+
     const wasConfirmed = reg.status === 'Confirmed';
     const oldPosition = reg.waitlistPosition;
 
