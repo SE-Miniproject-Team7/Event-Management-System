@@ -23,6 +23,11 @@ A web application for creating events, registering for them (with waitlist), sen
 - Sprint 1: 19 Oct – 23 Oct 2026
 - Sprint 2: 26 Oct – 30 Oct 2026
 
+## Organizer event edits
+
+Organizers can edit their own upcoming events. Editing a **Published** event automatically changes its status to **Pending Approval**, so an administrator must review and approve the updated event before it becomes publicly visible again. Event edits and their audit records are saved in the same database transaction.
+
+
 ## Workflow
 
 Work from assigned issues on the Project board, use a feature branch, open a Pull Request (`Closes #<issue>`), and get it reviewed before merging to `main`.
