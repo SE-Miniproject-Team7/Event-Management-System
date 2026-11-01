@@ -197,7 +197,7 @@ describe('Attendee registration API', () => {
       _id: 'oldest-waitlisted', userId: '64b000000000000000000003', waitlistPosition: 1,
     });
     User.findById.mockResolvedValue({ name: 'Waitlisted Attendee', email: 'waitlist@test.local' });
-    Event.findById.mockResolvedValue({ title: 'Design Week', startAt: new Date('2027-01-01T10:00:00Z'), venue: 'Hall A' });
+    Event.findById.mockReturnValue(query({ title: 'Design Week', startAt: new Date('2027-01-01T10:00:00Z'), venue: 'Hall A' }));
 
     const res = await request(app).delete(`/api/registrations/${REG_ID}`);
 
@@ -231,6 +231,7 @@ describe('Attendee registration API', () => {
     };
 
     Registration.findById.mockReturnValue(query(reg));
+    Event.findById.mockReturnValue(query({ startAt: new Date('2027-01-01T10:00:00Z') }));
     Registration.findOneAndUpdate.mockResolvedValue(null);
     Event.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
@@ -242,6 +243,26 @@ describe('Attendee registration API', () => {
       { $inc: { seatsTaken: -1 } },
       expect.objectContaining({ session: expect.any(Object) })
     );
+  });
+
+  test('rejects cancellation after the event has started without changing seats or registrations', async () => {
+    const reg = {
+      _id: REG_ID,
+      eventId: EVENT_ID,
+      userId: { equals: () => true },
+      status: 'Confirmed',
+      save: jest.fn(),
+    };
+    Registration.findById.mockReturnValue(query(reg));
+    Event.findById.mockReturnValue(query({ startAt: new Date(Date.now() - 60000) }));
+
+    const res = await request(app).delete(`/api/registrations/${REG_ID}`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('CANCEL_NOT_ALLOWED');
+    expect(reg.save).not.toHaveBeenCalled();
+    expect(Registration.findOneAndUpdate).not.toHaveBeenCalled();
+    expect(Event.updateOne).not.toHaveBeenCalled();
   });
 
   test('prevents an attendee from cancelling someone else’s registration', async () => {
