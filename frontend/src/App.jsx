@@ -1,4 +1,4 @@
-
+﻿
 import { useEffect, useState } from 'react'
 import {
   Link,
@@ -18,6 +18,7 @@ import RegisterPage from './pages/RegisterPage.jsx'
 import EventsPage from './pages/EventsPage.jsx'
 import EventDetailsPage from './pages/EventDetailsPage.jsx'
 import MyEventsPage from './pages/MyEventsPage.jsx'
+import MyRegistrationsPage from './pages/MyRegistrationsPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import api from './services/api'
 import './App.css'
@@ -100,8 +101,8 @@ function App() {
         <nav className="app-nav" aria-label="Main navigation">
           <Link to="/">Home</Link>
           <Link to="/events">Explore Events</Link>
-          {!checkingAuth && user?.role === "Organizer" && <Link to="/my-events">My Events</Link>}
           <Link to="/organizer/events/new">Create Event</Link>
+          {user?.role === 'Attendee' && <Link to="/registrations/me">My registrations</Link>}
           {user?.role === 'Organizer' && <Link to="/organizer/checkin">Check in attendees</Link>}
           <Link to="/admin/events/pending">Admin Approvals</Link>
           {user?.role === 'Admin' && <>
@@ -158,6 +159,7 @@ function App() {
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
           <Route path="/my-events" element={<MyEventsPage />} />
+          <Route path="/registrations/me" element={<MyRegistrationsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
