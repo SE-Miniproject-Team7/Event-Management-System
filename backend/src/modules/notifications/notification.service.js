@@ -5,6 +5,9 @@ const ALLOWED_TYPES = [
   'REGISTRATION_CONFIRMATION',
   'WAITLIST_PROMOTION',
   'EVENT_CANCELLATION',
+  'EVENT_UPDATED',
+  'EVENT_APPROVED',
+  'EVENT_REJECTED',
 ];
 
 async function enqueueNotification({
