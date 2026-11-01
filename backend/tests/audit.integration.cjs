@@ -11,6 +11,7 @@ const Event = require('../src/models/Event');
 const Category = require('../src/models/Category');
 const Registration = require('../src/models/Registration');
 const AuditLog = require('../src/models/AuditLog');
+const NotificationJob = require('../src/models/NotificationJob');
 const { recordCheckIn } = require('../src/modules/audit/audit.service');
 const app = require('../src/app');
 
@@ -30,11 +31,11 @@ describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_UR
     if (!new URL(process.env.MONGO_TEST_URI).pathname.startsWith('/ems_test_')) throw new Error('Use a dedicated ems_test_* database');
     process.env.JWT_SECRET = randomUUID();
     await mongoose.connect(process.env.MONGO_TEST_URI, { dbName: testDb, serverSelectionTimeoutMS: 15000 });
-    await Promise.all([User.init(), Category.init(), Event.init(), Registration.init(), AuditLog.init()]);
+    await Promise.all([User.init(), Category.init(), Event.init(), Registration.init(), AuditLog.init(), NotificationJob.init()]);
     hash = await bcrypt.hash('AuditPassword123', 4);
   });
   beforeEach(async () => {
-    await Promise.all([User.deleteMany({}), Category.deleteMany({}), Event.deleteMany({}), Registration.deleteMany({}), AuditLog.deleteMany({})]);
+    await Promise.all([User.deleteMany({}), Category.deleteMany({}), Event.deleteMany({}), Registration.deleteMany({}), AuditLog.deleteMany({}), NotificationJob.deleteMany({})]);
     [admin, organizer, attendee] = await User.create(['Admin', 'Organizer', 'Attendee'].map((role, i) => ({
       name: `Audit ${role}`, email: `audit${i}@test.local`, role, active: true, passwordHash: hash,
     })));
@@ -82,7 +83,13 @@ describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_UR
     assert.deepEqual(logs.map(log => log.action), ['USER_ROLE_CHANGED', 'USER_ACTIVITY_CHANGED']);
     assert.ok(logs.every(log => String(log.userId) === String(admin._id) && String(log.targetId) === String(attendee._id)));
   });
-  it('commits an organizer event edit and its audit record in the same real transaction', async () => {
+  it('commits an organizer event edit, audit record and attendee notification in the same real transaction', async () => {
+    await Registration.create({
+      eventId: published._id,
+      userId: attendee._id,
+      regCode: 'EVENT-EMAIL-UPDATE',
+      status: 'Confirmed',
+    });
     const response = await request(app)
       .patch(`/api/events/${published._id}`)
       .set('Cookie', cookie(organizer))
@@ -98,6 +105,12 @@ describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_UR
     assert.equal(String(logs[0].userId), String(organizer._id));
     assert.equal(String(logs[0].targetId), String(published._id));
     assert.equal(logs[0].targetType, 'Event');
+
+    const jobs = await NotificationJob.find({ type: 'EVENT_UPDATED' });
+    assert.equal(jobs.length, 1);
+    assert.equal(jobs[0].recipient, attendee.email);
+    assert.equal(jobs[0].payload.eventTitle, 'Updated audit fixture');
+    assert.equal(jobs[0].payload.awaitingApproval, true);
   });
   it('records each successful approval, rejection and cancellation once', async () => {
     const rejected = await Event.create(eventData('Pending Approval'));
