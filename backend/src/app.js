@@ -22,6 +22,8 @@ app.use(cors({
 // Count API attempts before parsing, including malformed/oversized bodies.
 app.use('/api', createApiLimiter());
 app.post('/api/auth/login', createLoginLimiter());
+app.post('/api/auth/forgot-password', createLoginLimiter());
+app.post('/api/auth/reset-password', createLoginLimiter());
 
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());

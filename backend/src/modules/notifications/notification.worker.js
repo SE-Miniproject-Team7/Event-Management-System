@@ -29,6 +29,14 @@ function escapeHtml(value) {
 function buildEmail(job) {
   const payload = job.payload || {};
 
+  if (job.type === 'PASSWORD_RESET') {
+    const url = payload.resetUrl;
+    if (typeof url !== 'string' || !/^https?:/.test(url)) throw new Error('Invalid reset notification');
+    return { subject: job.subject,
+      text: `Reset your EMS password using this single-use link, valid for 30 minutes: ${url}. If you did not request this, ignore this email.`,
+      html: `<p><a href="${escapeHtml(url)}">Reset your EMS password</a></p><p>This single-use link expires in 30 minutes. If you did not request it, ignore this email.</p>`,
+    };
+  }
   if (job.type === 'REGISTRATION_CONFIRMATION') {
     const name = payload.attendeeName || 'Attendee';
     const event = payload.eventTitle || 'your event';
