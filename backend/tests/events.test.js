@@ -352,6 +352,25 @@ describe('organizer edits own event (EMS-F-011)', () => {
     expect(event.save).not.toHaveBeenCalled();
   });
 
+  test.each([
+    ['startAt', { startAt: null }],
+    ['startAt', { startAt: 123 }],
+    ['endAt', { endAt: false }],
+    ['registrationDeadline', { registrationDeadline: null }],
+    ['registrationDeadline', { registrationDeadline: {} }],
+  ])('rejects invalid edit date input for %s', async (field, body) => {
+    const { cookie } = loginAs('Organizer');
+    const event = makeEvent();
+    Event.findById.mockResolvedValue(event);
+
+    const res = await edit(cookie, body);
+
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error.fields.map((item) => item.field)).toContain(field);
+    expect(event.save).not.toHaveBeenCalled();
+  });
+
   test('rejects a submitted start date in the past', async () => {
     const { cookie } = loginAs('Organizer');
     const event = makeEvent();
