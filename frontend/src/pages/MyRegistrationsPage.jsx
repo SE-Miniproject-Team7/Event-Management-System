@@ -21,6 +21,7 @@ function MyRegistrationsPage() {
   const [message, setMessage] = useState('')
   const [cancellingId, setCancellingId] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
+  const [currentTime, setCurrentTime] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -30,7 +31,10 @@ function MyRegistrationsPage() {
       setError('')
       try {
         const response = await api.get('/registrations/me')
-        if (!cancelled) setItems(response.data.items || [])
+        if (!cancelled) {
+          setItems(response.data.items || [])
+          setCurrentTime(Date.now())
+        }
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -93,7 +97,7 @@ function MyRegistrationsPage() {
           {items.map((item) => {
             const event = item.event
             const canCancel = ['Confirmed', 'Waitlisted'].includes(item.status) &&
-              event?.startAt && new Date(event.startAt).getTime() > Date.now()
+              event?.startAt && currentTime > 0 && new Date(event.startAt).getTime() > currentTime
             const statusClass = item.status.toLowerCase().replace(/[^a-z]+/g, '-')
 
             return (
