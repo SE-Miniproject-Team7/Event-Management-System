@@ -15,7 +15,7 @@ const { recordCheckIn } = require('../src/modules/audit/audit.service');
 const app = require('../src/app');
 
 describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_URI, timeout: 30000 }, () => {
-  const testDb = `ems_test_audit_${randomUUID().replaceAll('-', '')}`;
+  const testDb = `ems_test_audit_${randomUUID().replaceAll('-', '').slice(0, 12)}`;
   const oldSecret = process.env.JWT_SECRET;
   let admin, organizer, attendee, category, pending, published, hash;
   const cookie = user => `ems_token=${jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET)}`;
