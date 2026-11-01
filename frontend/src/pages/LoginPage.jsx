@@ -134,6 +134,7 @@ function LoginPage({ onLoginSuccess }) {
         </button>
       </form>
 
+      <p><Link to="/forgot-password">Forgot password?</Link></p>
       <p className="auth-switch">
         Don't have an account? <Link to="/register">Register</Link>
       </p>

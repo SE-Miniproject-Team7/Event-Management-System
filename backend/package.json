@@ -1,4 +1,3 @@
-
 {
   "name": "backend",
   "version": "1.0.0",
@@ -14,7 +13,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/seed.js",
-    "test:security": "jest --runInBand tests/security.test.js tests/accountRegistration.test.js tests/auth.test.js tests/rateLimit.test.js tests/adminUsers.test.js tests/audit.model.test.js tests/audit.service.test.js tests/checkin.test.js tests/events.test.js"
+    "test:security": "jest --runInBand tests/security.test.js tests/accountRegistration.test.js tests/auth.test.js tests/rateLimit.test.js tests/adminUsers.test.js tests/audit.model.test.js tests/audit.service.test.js tests/checkin.test.js tests/events.test.js",
+    "test:reset": "node --test tests/reset.integration.cjs"
   },
   "keywords": [],
   "author": "",

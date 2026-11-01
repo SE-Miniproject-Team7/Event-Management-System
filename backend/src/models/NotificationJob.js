@@ -6,7 +6,8 @@ const notificationJobSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: [
-      'REGISTRATION_CONFIRMATION',
+      'PASSWORD_RESET',
+    'REGISTRATION_CONFIRMATION',
       'WAITLIST_PROMOTION',
       'EVENT_CANCELLATION',
       'EVENT_UPDATED',

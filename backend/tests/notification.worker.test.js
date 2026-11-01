@@ -71,6 +71,22 @@ describe('Notification worker', () => {
     consoleError.mockRestore();
   });
 
+  test('sends reset links only to the mail transport and never into logs', async () => {
+    const resetUrl = 'https://ems.example.test/reset-password#' + 'a'.repeat(64);
+    const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      NotificationJob.findOneAndUpdate.mockResolvedValueOnce({ ...job, type: 'PASSWORD_RESET',
+        subject: 'Reset your EMS password', payload: { resetUrl } });
+      await processDueNotifications();
+      expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({
+        to: job.recipient, text: expect.stringContaining(resetUrl),
+        html: expect.stringContaining('expires in 30 minutes'),
+      }));
+      expect(JSON.stringify(log.mock.calls) + JSON.stringify(consoleError.mock.calls)).not.toContain(resetUrl);
+      expect(NotificationLog.create).toHaveBeenCalledWith(expect.objectContaining({ status: 'Sent' }));
+    } finally { log.mockRestore(); }
+  });
+
   test('does not process jobs when MongoDB is disconnected', async () => {
     mongoose.connection.readyState = 0;
 

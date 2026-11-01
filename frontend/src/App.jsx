@@ -13,6 +13,7 @@ import AdminUsersPage from './pages/AdminUsersPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import CreateEventPage from './pages/CreateEventPage.jsx'
 import PendingEventsPage from './pages/PendingEventsPage.jsx'
+import PasswordResetPage from './pages/PasswordResetPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import EventsPage from './pages/EventsPage.jsx'
@@ -154,6 +155,8 @@ function App() {
             path="/login"
             element={<LoginPage onLoginSuccess={setUser} />}
           />
+          <Route path="/forgot-password" element={<PasswordResetPage key="forgot" />} />
+          <Route path="/reset-password" element={<PasswordResetPage key="reset" reset />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />

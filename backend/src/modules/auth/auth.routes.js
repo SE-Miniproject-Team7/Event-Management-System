@@ -106,6 +106,21 @@ router.post('/register', asyncHandler(async (req, res) => {
   }
 }));
 
+const { requestReset, resetPassword } = require('./reset.service');
+router.post('/forgot-password', asyncHandler(async (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new AppError(422, 'VALIDATION_ERROR', 'Enter a valid email address.');
+  }
+  await requestReset(email);
+  res.status(202).json({ message: 'If an active account exists, a password reset email will be sent.' });
+}));
+router.post('/reset-password', asyncHandler(async (req, res) => {
+  await resetPassword(req.body?.token, req.body?.newPassword);
+  clearAuthCookie(res);
+  res.json({ message: 'Password updated. Please sign in.' });
+}));
+
 // Log in an existing user.
 router.post('/login', asyncHandler(async (req, res) => {
   let user = null;

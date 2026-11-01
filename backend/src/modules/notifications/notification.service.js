@@ -2,7 +2,8 @@
 const NotificationJob = require('../../models/NotificationJob');
 
 const ALLOWED_TYPES = [
-  'REGISTRATION_CONFIRMATION',
+  'PASSWORD_RESET',
+    'REGISTRATION_CONFIRMATION',
   'WAITLIST_PROMOTION',
   'EVENT_CANCELLATION',
   'EVENT_UPDATED',
