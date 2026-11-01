@@ -8,6 +8,7 @@ const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
 const { recordAudit } = require('../audit/audit.service');
+const { enqueueNotification } = require('../notifications/notification.service');
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const withRemaining = (e) => ({ ...e.toObject(), remainingSeats: e.capacity - e.seatsTaken });
@@ -149,6 +150,25 @@ router.patch('/:id/approval', authenticate, requireRole('Admin'), asyncHandler(a
     await recordAudit(req, decision === 'approve' ? 'EVENT_APPROVED' : 'EVENT_REJECTED', {
       targetId: event._id, targetType: 'Event', session,
     });
+
+    const organizer = await User.findById(event.organizerId, 'name email').session(session);
+    if (organizer?.email) {
+      const approved = decision === 'approve';
+      await enqueueNotification({
+        type: approved ? 'EVENT_APPROVED' : 'EVENT_REJECTED',
+        recipient: organizer.email,
+        subject: approved
+          ? `Event approved: ${event.title}`
+          : `Event decision: ${event.title}`,
+        payload: {
+          idempotencyKey: `event-decision:${event._id}:${event.status}:${event.updatedAt?.getTime() || Date.now()}`,
+          organizerName: organizer.name || 'Organizer',
+          eventTitle: event.title,
+          rejectionReason: approved ? undefined : event.rejectionReason,
+        },
+        session,
+      });
+    }
     return event;
   });
   res.json({ event });
@@ -171,6 +191,11 @@ router.post('/:id/cancel', authenticate, requireRole('Organizer'), asyncHandler(
         throw new AppError(409, 'CANCEL_NOT_ALLOWED', 'This event cannot be cancelled');
       }
 
+      const activeRegistrations = await Registration.find({
+        eventId: event._id,
+        status: { $in: ['Confirmed', 'Waitlisted', 'Checked-in'] },
+      }).populate('userId', 'name email').session(session);
+
       const result = await Registration.updateMany(
         { eventId: event._id, status: { $in: ['Confirmed', 'Waitlisted', 'Checked-in'] } },
         { $set: { status: 'Cancelled', waitlistPosition: null } },
@@ -182,12 +207,29 @@ router.post('/:id/cancel', authenticate, requireRole('Organizer'), asyncHandler(
       event.seatsTaken = 0;
       await event.save({ session });
       await recordAudit(req, 'EVENT_CANCELLED', { targetId: event._id, targetType: 'Event', session });
+
+      for (const registration of activeRegistrations) {
+        const attendee = registration.userId;
+        if (!attendee?.email) continue;
+        await enqueueNotification({
+          type: 'EVENT_CANCELLATION',
+          recipient: attendee.email,
+          subject: `Event cancelled: ${event.title}`,
+          payload: {
+            idempotencyKey: `event-cancellation:${event._id}:${registration._id}`,
+            attendeeName: attendee.name || 'Attendee',
+            eventTitle: event.title,
+            venue: event.venue,
+            startAt: event.startAt?.toISOString(),
+          },
+          session,
+        });
+      }
     });
   } finally {
     await session.endSession();
   }
 
-  // TODO (Sprint 2, EMS-F-024): queue a cancellation email for each affected attendee.
   res.json({ event, cancelledRegistrations });
 }));
 
