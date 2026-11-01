@@ -151,7 +151,10 @@ router.patch('/:id/approval', authenticate, requireRole('Admin'), asyncHandler(a
       targetId: event._id, targetType: 'Event', session,
     });
 
-    const organizer = await User.findById(event.organizerId, 'name email').session(session);
+    const organizerQuery = User.findById(event.organizerId, 'name email');
+    const organizer = typeof organizerQuery.session === 'function'
+      ? await organizerQuery.session(session)
+      : await organizerQuery;
     if (organizer?.email) {
       const approved = decision === 'approve';
       await enqueueNotification({
