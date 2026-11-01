@@ -1,4 +1,5 @@
 jest.mock('../src/modules/audit/audit.service', () => ({ recordAudit: jest.fn(), recordCheckIn: jest.fn() }));
+jest.mock('../src/modules/notifications/notification.service', () => ({ enqueueNotification: jest.fn() }));
 process.env.JWT_SECRET = 'test-secret-for-events';
 
 const request = require('supertest');
@@ -22,6 +23,7 @@ const User = require('../src/models/User');
 const Category = require('../src/models/Category');
 const Event = require('../src/models/Event');
 const Registration = require('../src/models/Registration');
+const { enqueueNotification } = require('../src/modules/notifications/notification.service');
 const app = require('../src/app');
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -243,10 +245,18 @@ describe('organizer cancels event (TC-EVT-04, TC-EVT-05)', () => {
     jest.spyOn(mongoose, 'startSession').mockResolvedValue(session);
   });
 
-  test('owner cancels: event cancelled, registrations cancelled, seats reset', async () => {
+  test('owner cancels: event cancelled, registrations cancelled, seats reset and attendee emails queued', async () => {
     const { cookie } = loginAs('Organizer');
     const ev = makeEvent({ seatsTaken: 3 });
     Event.findById.mockResolvedValue(ev);
+    Registration.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        session: jest.fn().mockResolvedValue([{
+          _id: 'registration-1',
+          userId: { name: 'Test Attendee', email: 'attendee@example.com' },
+        }]),
+      }),
+    });
     Registration.updateMany.mockResolvedValue({ modifiedCount: 5 });
 
     const res = await cancel(cookie);
@@ -261,6 +271,15 @@ describe('organizer cancels event (TC-EVT-04, TC-EVT-05)', () => {
       { session }
     );
     expect(ev.save).toHaveBeenCalledWith({ session });
+    expect(enqueueNotification).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'EVENT_CANCELLATION',
+      recipient: 'attendee@example.com',
+      payload: expect.objectContaining({
+        idempotencyKey: `event-cancellation:${ev._id}:registration-1`,
+        attendeeName: 'Test Attendee',
+      }),
+      session,
+    }));
     expect(session.endSession).toHaveBeenCalled();
   });
 
