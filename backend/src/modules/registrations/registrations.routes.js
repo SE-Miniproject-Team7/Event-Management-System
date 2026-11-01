@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Event = require('../../models/Event');
 const Registration = require('../../models/Registration');
+const User = require('../../models/User');
+const { sendWaitlistPromotion } = require('./email.service');
 const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
@@ -138,6 +140,7 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
     throw new AppError(404, 'NOT_FOUND', 'Registration not found');
   }
 
+  let promotion = null;
   await inTransaction(async (session) => {
     const reg = await Registration.findById(req.params.id).session(session);
 
@@ -178,6 +181,10 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
 
       // A promotion replaces the cancelled confirmed attendee, so seatsTaken
       // stays unchanged. If nobody is waiting, release the seat.
+      if (promoted) {
+        promotion = { userId: promoted.userId, eventId: reg.eventId };
+      }
+
       if (!promoted) {
         const eventUpdate = await Event.updateOne(
           { _id: reg.eventId, seatsTaken: { $gt: 0 } },
@@ -202,6 +209,27 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
       );
     }
   });
+
+  if (promotion?.userId) {
+    try {
+      const [attendee, event] = await Promise.all([
+        User.findById(promotion.userId, 'name email'),
+        Event.findById(promotion.eventId, 'title startAt venue'),
+      ]);
+      if (attendee?.email && event) {
+        await sendWaitlistPromotion({
+          to: attendee.email,
+          name: attendee.name,
+          eventTitle: event.title,
+          startAt: event.startAt,
+          venue: event.venue,
+        });
+      }
+    } catch {
+      // A mail failure must not roll back a committed promotion or cancellation.
+      console.warn(JSON.stringify({ level: 'warn', event: 'waitlist_promotion_email_failed' }));
+    }
+  }
 
   res.json({ status: 'Cancelled' });
 }));

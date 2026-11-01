@@ -9,6 +9,9 @@
   requireRole: () => (req, res, next) => next(),
 }));
 
+jest.mock('../src/models/User', () => ({ findById: jest.fn() }));
+jest.mock('../src/modules/registrations/email.service', () => ({ sendWaitlistPromotion: jest.fn() }));
+
 jest.mock('../src/models/Event', () => ({
   findById: jest.fn(),
   findOneAndUpdate: jest.fn(),
@@ -36,6 +39,8 @@ jest.mock('mongoose', () => {
 const request = require('supertest');
 const mongoose = require('mongoose');
 const Event = require('../src/models/Event');
+const User = require('../src/models/User');
+const { sendWaitlistPromotion } = require('../src/modules/registrations/email.service');
 const Registration = require('../src/models/Registration');
 const app = require('../src/app');
 
@@ -188,7 +193,11 @@ describe('Attendee registration API', () => {
     };
 
     Registration.findById.mockReturnValue(query(reg));
-    Registration.findOneAndUpdate.mockResolvedValue({ _id: 'oldest-waitlisted' });
+    Registration.findOneAndUpdate.mockResolvedValue({
+      _id: 'oldest-waitlisted', userId: '64b000000000000000000003', waitlistPosition: 1,
+    });
+    User.findById.mockResolvedValue({ name: 'Waitlisted Attendee', email: 'waitlist@test.local' });
+    Event.findById.mockResolvedValue({ title: 'Design Week', startAt: new Date('2027-01-01T10:00:00Z'), venue: 'Hall A' });
 
     const res = await request(app).delete(`/api/registrations/${REG_ID}`);
 
@@ -205,6 +214,10 @@ describe('Attendee registration API', () => {
       })
     );
     expect(Event.updateOne).not.toHaveBeenCalled();
+    expect(sendWaitlistPromotion).toHaveBeenCalledWith({
+      to: 'waitlist@test.local', name: 'Waitlisted Attendee', eventTitle: 'Design Week',
+      startAt: new Date('2027-01-01T10:00:00Z'), venue: 'Hall A',
+    });
   });
 
   test('cancelling a confirmed registration releases a seat when nobody is waitlisted', async () => {
