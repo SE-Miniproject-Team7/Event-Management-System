@@ -8,6 +8,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../src/models/User');
 const Event = require('../src/models/Event');
+const Category = require('../src/models/Category');
 const Registration = require('../src/models/Registration');
 const AuditLog = require('../src/models/AuditLog');
 const { recordCheckIn } = require('../src/modules/audit/audit.service');
@@ -16,27 +17,28 @@ const app = require('../src/app');
 describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_URI, timeout: 30000 }, () => {
   const testDb = `ems_test_audit_${randomUUID().replaceAll('-', '')}`;
   const oldSecret = process.env.JWT_SECRET;
-  let admin, organizer, attendee, pending, published, hash;
+  let admin, organizer, attendee, category, pending, published, hash;
   const cookie = user => `ems_token=${jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET)}`;
   const patchUser = body => request(app).patch(`/api/admin/users/${attendee._id}`).set('Cookie', cookie(admin)).send(body);
   const approval = (event, decision) => request(app).patch(`/api/events/${event._id}/approval`).set('Cookie', cookie(admin)).send({ decision, reason: 'Not appropriate for this venue' });
   const cancel = event => request(app).post(`/api/events/${event._id}/cancel`).set('Cookie', cookie(organizer));
   const eventData = status => ({ title: 'Audit fixture', description: 'Synthetic event',
-    categoryId: new mongoose.Types.ObjectId(), organizerId: organizer._id, venue: 'Test Hall',
+    categoryId: category._id, organizerId: organizer._id, venue: 'Test Hall',
     startAt: new Date(Date.now() + 7200000), endAt: new Date(Date.now() + 18000000),
     registrationDeadline: new Date(Date.now() + 3600000), capacity: 10, status });
   before(async () => {
     if (!new URL(process.env.MONGO_TEST_URI).pathname.startsWith('/ems_test_')) throw new Error('Use a dedicated ems_test_* database');
     process.env.JWT_SECRET = randomUUID();
     await mongoose.connect(process.env.MONGO_TEST_URI, { dbName: testDb, serverSelectionTimeoutMS: 15000 });
-    await Promise.all([User.init(), Event.init(), Registration.init(), AuditLog.init()]);
+    await Promise.all([User.init(), Category.init(), Event.init(), Registration.init(), AuditLog.init()]);
     hash = await bcrypt.hash('AuditPassword123', 4);
   });
   beforeEach(async () => {
-    await Promise.all([User.deleteMany({}), Event.deleteMany({}), Registration.deleteMany({}), AuditLog.deleteMany({})]);
+    await Promise.all([User.deleteMany({}), Category.deleteMany({}), Event.deleteMany({}), Registration.deleteMany({}), AuditLog.deleteMany({})]);
     [admin, organizer, attendee] = await User.create(['Admin', 'Organizer', 'Attendee'].map((role, i) => ({
       name: `Audit ${role}`, email: `audit${i}@test.local`, role, active: true, passwordHash: hash,
     })));
+    category = await Category.create({ name: 'Audit Test Category', active: true });
     [pending, published] = await Event.create([eventData('Pending Approval'), eventData('Published')]);
   });
   after(async () => {
@@ -79,6 +81,23 @@ describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_UR
     const logs = await AuditLog.find().sort({ _id: 1 });
     assert.deepEqual(logs.map(log => log.action), ['USER_ROLE_CHANGED', 'USER_ACTIVITY_CHANGED']);
     assert.ok(logs.every(log => String(log.userId) === String(admin._id) && String(log.targetId) === String(attendee._id)));
+  });
+  it('commits an organizer event edit and its audit record in the same real transaction', async () => {
+    const response = await request(app)
+      .patch(`/api/events/${published._id}`)
+      .set('Cookie', cookie(organizer))
+      .send({ title: 'Updated audit fixture' });
+
+    assert.equal(response.status, 200);
+    const savedEvent = await Event.findById(published._id);
+    assert.equal(savedEvent.title, 'Updated audit fixture');
+    assert.equal(savedEvent.status, 'Pending Approval');
+
+    const logs = await AuditLog.find({ action: 'EVENT_UPDATED' });
+    assert.equal(logs.length, 1);
+    assert.equal(String(logs[0].userId), String(organizer._id));
+    assert.equal(String(logs[0].targetId), String(published._id));
+    assert.equal(logs[0].targetType, 'Event');
   });
   it('records each successful approval, rejection and cancellation once', async () => {
     const rejected = await Event.create(eventData('Pending Approval'));
