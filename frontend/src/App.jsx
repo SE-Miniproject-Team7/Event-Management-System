@@ -7,9 +7,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
-import CheckInPage from './pages/CheckInPage.jsx'
-import AdminSummaryPage from './pages/AdminSummaryPage.jsx'
-import AdminUsersPage from './pages/AdminUsersPage.jsx'
+
 import HomePage from './pages/HomePage.jsx'
 import CreateEventPage from './pages/CreateEventPage.jsx'
 import PendingEventsPage from './pages/PendingEventsPage.jsx'
@@ -19,7 +17,10 @@ import RegisterPage from './pages/RegisterPage.jsx'
 import EventsPage from './pages/EventsPage.jsx'
 import EventDetailsPage from './pages/EventDetailsPage.jsx'
 import MyRegistrationsPage from './pages/MyRegistrationsPage.jsx'
+import CheckInPage from './pages/CheckInPage.jsx'
+import EventReportsPage from './pages/EventReportsPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
+
 import api from './services/api'
 import './App.css'
 
@@ -93,6 +94,10 @@ function App() {
 
   return (
     <div className="app">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
+
       <header className="app-header">
         <Link className="brand" to="/">
           Event Management System
@@ -102,13 +107,19 @@ function App() {
           <Link to="/">Home</Link>
           <Link to="/events">Explore Events</Link>
           <Link to="/organizer/events/new">Create Event</Link>
-          {user?.role === 'Attendee' && <Link to="/registrations/me">My registrations</Link>}
-          {user?.role === 'Organizer' && <Link to="/organizer/checkin">Check in attendees</Link>}
+
+          {user?.role === 'Attendee' && (
+            <Link to="/registrations/me">My registrations</Link>
+          )}
+
+          {user?.role === 'Organizer' && (
+            <>
+              <Link to="/organizer/checkin">Check in attendees</Link>
+              <Link to="/organizer/reports">Event reports</Link>
+            </>
+          )}
+
           <Link to="/admin/events/pending">Admin Approvals</Link>
-          {user?.role === 'Admin' && <>
-            <Link to="/admin/summary">Platform summary</Link>
-            <Link to="/admin/users">Manage users</Link>
-          </>}
 
           {!checkingAuth && !user && (
             <>
@@ -137,30 +148,54 @@ function App() {
         <span className="header-label">EMS</span>
       </header>
 
-      <main className="app-main">
+      <main className="app-main" id="main-content" tabIndex="-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/organizer/checkin" element={<CheckInPage user={user} checkingAuth={checkingAuth} />} />
-          <Route path="/admin/summary" element={<AdminSummaryPage user={user} checkingAuth={checkingAuth} />} />
-          <Route path="/admin/users" element={<AdminUsersPage user={user} checkingAuth={checkingAuth} onSelfUpdate={setUser} />} />
+
           <Route
             path="/organizer/events/new"
             element={<CreateEventPage />}
           />
+
+          <Route
+            path="/organizer/checkin"
+            element={
+              <CheckInPage user={user} checkingAuth={checkingAuth} />
+            }
+          />
+
+          <Route
+            path="/organizer/reports"
+            element={
+              <EventReportsPage user={user} checkingAuth={checkingAuth} />
+            }
+          />
+
           <Route
             path="/admin/events/pending"
             element={<PendingEventsPage />}
           />
+
           <Route
             path="/login"
             element={<LoginPage onLoginSuccess={setUser} />}
           />
-          <Route path="/forgot-password" element={<PasswordResetPage key="forgot" />} />
-          <Route path="/reset-password" element={<PasswordResetPage key="reset" reset />} />
+
+          <Route
+            path="/forgot-password"
+            element={<PasswordResetPage key="forgot" />}
+          />
+
+          <Route
+            path="/reset-password"
+            element={<PasswordResetPage key="reset" reset />}
+          />
+
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
           <Route path="/registrations/me" element={<MyRegistrationsPage />} />
+
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
