@@ -352,6 +352,19 @@ describe('organizer edits own event (EMS-F-011)', () => {
     expect(event.save).not.toHaveBeenCalled();
   });
 
+  test('rejects a submitted start date in the past', async () => {
+    const { cookie } = loginAs('Organizer');
+    const event = makeEvent();
+    Event.findById.mockResolvedValue(event);
+
+    const res = await edit(cookie, { startAt: iso(-1), endAt: iso(1), registrationDeadline: iso(-2) });
+
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error.fields.map((field) => field.field)).toContain('startAt');
+    expect(event.save).not.toHaveBeenCalled();
+  });
+
   test('client cannot change status or organizer ownership', async () => {
     const { cookie } = loginAs('Organizer');
     const event = makeEvent();
