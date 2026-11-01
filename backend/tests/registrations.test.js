@@ -89,6 +89,8 @@ describe('Attendee registration API', () => {
   });
 
   test('creates a confirmed registration and queues a confirmation email', async () => {
+    const session = mongoose.startSession.mock.results;
+
     Event.findById.mockReturnValue(query({
       title: 'Tech Conference',
       status: 'Published',
@@ -131,6 +133,7 @@ describe('Attendee registration API', () => {
           eventTitle: 'Tech Conference',
           regCode: 'REG-ABC123',
         }),
+        session: expect.any(Object),
       })
     );
 
@@ -162,7 +165,9 @@ describe('Attendee registration API', () => {
     expect(enqueueNotification).not.toHaveBeenCalled();
   });
 
-  test('does not fail registration when notification queue insertion fails', async () => {
+  test('rolls back registration when notification queue insertion fails', async () => {
+    const session = mockTransaction();
+
     Event.findById.mockReturnValue(query({
       title: 'Tech Conference',
       status: 'Published',
@@ -184,10 +189,20 @@ describe('Attendee registration API', () => {
     const res = await request(app)
       .post(`/api/events/${EVENT_ID}/registrations`);
 
-    expect(res.status).toBe(201);
-    expect(res.body.status).toBe('Confirmed');
-    expect(res.body.regCode).toBe('REG-ABC123');
+    expect(res.status).toBe(500);
+
+    expect(session.withTransaction).toHaveBeenCalledTimes(1);
+    expect(session.endSession).toHaveBeenCalledTimes(1);
+
+    expect(Registration.create).toHaveBeenCalledTimes(1);
+
     expect(enqueueNotification).toHaveBeenCalledTimes(1);
+    expect(enqueueNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'REGISTRATION_CONFIRMATION',
+        session,
+      })
+    );
   });
 
   test('rejects a duplicate active registration', async () => {

@@ -78,11 +78,24 @@ router.post('/events/:id/registrations', authenticate, requireRole('Attendee'), 
           status: 'Confirmed',
         }], { session });
 
+        // Save the email job in the SAME transaction as the registration.
+        await enqueueNotification({
+          type: 'REGISTRATION_CONFIRMATION',
+          recipient: req.user.email,
+          subject: `Registration confirmed: ${event.title}`,
+          payload: {
+            idempotencyKey: `registration:${reg._id}`,
+            attendeeName: req.user.name || 'Attendee',
+            eventTitle: event.title,
+            regCode: reg.regCode,
+          },
+          session,
+        });
+
         return {
           registrationId: reg._id,
           regCode: reg.regCode,
           status: 'Confirmed',
-          eventTitle: event.title,
         };
       }
 
@@ -104,36 +117,10 @@ router.post('/events/:id/registrations', authenticate, requireRole('Attendee'), 
         regCode: reg.regCode,
         status: 'Waitlisted',
         waitlistPosition: position,
-        eventTitle: event.title,
       };
     });
 
-    const { eventTitle, ...response } = result;
-
-    // Queue confirmation email only after the registration transaction commits.
-    if (response.status === 'Confirmed') {
-      try {
-        await enqueueNotification({
-          type: 'REGISTRATION_CONFIRMATION',
-          recipient: req.user.email,
-          subject: `Registration confirmed: ${eventTitle}`,
-          payload: {
-            idempotencyKey: `registration:${response.registrationId}`,
-            attendeeName: req.user.name || 'Attendee',
-            eventTitle,
-            regCode: response.regCode,
-          },
-        });
-      } catch {
-        // Email queue failure must not invalidate a successful registration.
-        console.error(JSON.stringify({
-          level: 'error',
-          event: 'registration_confirmation_enqueue_failed',
-        }));
-      }
-    }
-
-    return res.status(201).json(response);
+    return res.status(201).json(result);
   } catch (err) {
     if (err.code === 11000) {
       throw new AppError(409, 'DUPLICATE_REGISTRATION', 'Already registered');
