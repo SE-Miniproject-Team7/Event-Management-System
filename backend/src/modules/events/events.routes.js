@@ -8,6 +8,7 @@ const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
 const { recordAudit } = require('../audit/audit.service');
+const { enqueueNotification } = require('../notifications/notification.service');
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const withRemaining = (e) => ({ ...e.toObject(), remainingSeats: e.capacity - e.seatsTaken });
@@ -174,6 +175,14 @@ router.patch('/:id', authenticate, requireRole('Organizer'), asyncHandler(async 
     }
     if (fields.length) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid event data', fields);
 
+    const wasPublished = event.status === 'Published';
+    const activeRegistrations = wasPublished
+      ? await Registration.find({
+          eventId: event._id,
+          status: { $in: ['Confirmed', 'Waitlisted', 'Checked-in'] },
+        }).populate('userId', 'name email').session(session)
+      : [];
+
     event.title = next.title.trim();
     event.description = next.description.trim();
     event.categoryId = next.categoryId;
@@ -182,9 +191,28 @@ router.patch('/:id', authenticate, requireRole('Organizer'), asyncHandler(async 
     event.endAt = next.endAt;
     event.registrationDeadline = next.registrationDeadline;
     event.capacity = next.capacity;
-    if (event.status === 'Published') event.status = 'Pending Approval';
+    if (wasPublished) event.status = 'Pending Approval';
     await event.save({ session });
     await recordAudit(req, 'EVENT_UPDATED', { targetId: event._id, targetType: 'Event', session });
+
+    for (const registration of activeRegistrations) {
+      const attendee = registration.userId;
+      if (!attendee?.email) continue;
+      await enqueueNotification({
+        type: 'EVENT_UPDATED',
+        recipient: attendee.email,
+        subject: `Event updated: ${event.title}`,
+        payload: {
+          idempotencyKey: `event-updated:${event._id}:${event.updatedAt?.getTime() || Date.now()}:${registration._id}`,
+          attendeeName: attendee.name || 'Attendee',
+          eventTitle: event.title,
+          venue: event.venue,
+          startAt: event.startAt?.toISOString(),
+          awaitingApproval: wasPublished,
+        },
+        session,
+      });
+    }
     return event;
   });
   res.json({ event: updated });
