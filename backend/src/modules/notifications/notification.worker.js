@@ -73,6 +73,12 @@ Your registration has also been cancelled. We apologize for the inconvenience.`,
     const event = payload.eventTitle || 'your event';
     const venue = payload.venue || 'not specified';
     const startAt = payload.startAt || 'not specified';
+    const approvalNote = payload.awaitingApproval
+      ? '\nThe event is awaiting administrator re-approval before it is published again.'
+      : '';
+    const approvalHtml = payload.awaitingApproval
+      ? '<p>The event is awaiting administrator re-approval before it is published again.</p>'
+      : '';
     return {
       subject: job.subject,
       text: `Hello ${name},
@@ -81,11 +87,11 @@ The details for "${event}" have changed.
 Venue: ${venue}
 Start time: ${startAt}
 
-Please review the updated event details before attending.`,
+Please review the updated event details before attending.${approvalNote}`,
       html: `<p>Hello ${escapeHtml(name)},</p>
         <p>The details for <strong>${escapeHtml(event)}</strong> have changed.</p>
         <p>Venue: ${escapeHtml(venue)}<br>Start time: ${escapeHtml(startAt)}</p>
-        <p>Please review the updated event details before attending.</p>`,
+        <p>Please review the updated event details before attending.</p>${approvalHtml}`,
     };
   }
 
