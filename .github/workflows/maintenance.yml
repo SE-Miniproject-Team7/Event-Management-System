@@ -1,0 +1,52 @@
+name: Backend maintenance recovery tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/src/app.js'
+      - 'backend/src/server.js'
+      - 'backend/src/middleware/errorHandler.js'
+      - 'backend/src/middleware/requestLogger.js'
+      - 'backend/scripts/**'
+      - 'backend/tests/health.test.js'
+      - 'backend/tests/databaseBackup.integration.cjs'
+      - 'backend/package.json'
+      - 'backend/package-lock.json'
+      - '.gitignore'
+      - '.github/workflows/maintenance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backup-restore:
+    name: Health, logging, and backup restore
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm test -- --runInBand tests/health.test.js
+      - name: Start disposable MongoDB for backup and restore verification
+        run: |
+          docker run -d --rm --name ems-backup-mongo -p 27017:27017 mongo:7
+          for attempt in $(seq 1 30); do
+            if docker exec ems-backup-mongo mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "MongoDB did not become ready"
+          exit 1
+      - name: Verify backup restore record counts and sample data
+        run: node --test tests/databaseBackup.integration.cjs
+        env:
+          MONGO_TEST_URI: mongodb://localhost:27017/ems_test_ci?directConnection=true
