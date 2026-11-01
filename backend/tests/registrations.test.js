@@ -114,6 +114,43 @@ describe('Attendee registration API', () => {
     expect(res.body.waitlistPosition).toBe(3);
   });
 
+  test('waitlists the third attendee at position one when a capacity-two event is full', async () => {
+    const fullEvent = {
+      status: 'Published',
+      capacity: 2,
+      seatsTaken: 2,
+      registrationDeadline: new Date(Date.now() + 60000),
+    };
+    Event.findById.mockReturnValue(query(fullEvent));
+    Registration.findOne.mockReturnValue(query(null));
+    Event.findOneAndUpdate.mockResolvedValue(null);
+    Registration.countDocuments.mockReturnValue(query(0));
+    Registration.create.mockResolvedValue([{
+      _id: REG_ID,
+      regCode: 'REG-ABC123',
+    }]);
+
+    const res = await request(app).post(`/api/events/${EVENT_ID}/registrations`);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      status: 'Waitlisted',
+      waitlistPosition: 1,
+    });
+    expect(Registration.countDocuments).toHaveBeenCalledWith({
+      eventId: EVENT_ID,
+      status: 'Waitlisted',
+    });
+    expect(Registration.create).toHaveBeenCalledWith(
+      [expect.objectContaining({
+        status: 'Waitlisted',
+        waitlistPosition: 1,
+      })],
+      expect.objectContaining({ session: expect.any(Object) })
+    );
+    expect(fullEvent.seatsTaken).toBe(2);
+  });
+
   test('rejects a duplicate active registration', async () => {
     Event.findById.mockReturnValue(query({
       status: 'Published',
