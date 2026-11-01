@@ -1,15 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 
 export default function PasswordResetPage({ reset = false }) {
-  const [token] = useState(() => reset ? window.location.hash.slice(1) : '')
+  const [token, setToken] = useState(() => reset ? window.location.hash.slice(1) : '')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    function updateLink() {
+      setToken(reset ? window.location.hash.slice(1) : '')
+      setMessage('')
+      setError('')
+    }
+    window.addEventListener('hashchange', updateLink)
+    return () => window.removeEventListener('hashchange', updateLink)
+  }, [reset])
   async function submit(event) {
     event.preventDefault()
     setError('')

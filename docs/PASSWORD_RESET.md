@@ -52,7 +52,7 @@ The real database tests check single-use concurrency, old/new password hashes,
 expiry, supersession, inactive accounts, generic responses and rollback when
 enqueueing fails. Frontend tests check request, confirmation and missing-link
 behaviour; worker tests verify template dispatch without logging links.
-Live mailbox delivery and clicking its real link remain a manual acceptance
+External provider delivery and clicking its real link remain a deployment
 step. Local automated tests do not claim production TLS or live SMTP delivery.
 
 ## Team integration
@@ -66,3 +66,14 @@ preserve it when adding reminder/change templates. No new sender is introduced.
 296 backend Jest tests, 33 existing MongoDB integration tests plus 5 reset
 integration tests, and 37 frontend tests passed. Frontend lint and production
 build passed. Tests used synthetic accounts; no live reset email was sent.
+
+## SMTP and browser acceptance — 1 November 2026
+
+Verified using the real Nodemailer transport, shared queue worker, real MongoDB
+and Chrome against an isolated local SMTP inbox. The email was delivered and its
+link was opened in the browser. Password reset succeeded, the old password was
+rejected by login, the new password logged in, reuse of the delivered link was
+rejected, and a Sent delivery log was recorded. Test accounts/database were
+removed afterwards. No external Mailtrap delivery is claimed: this laptop has
+no SMTP provider credentials. Production SMTP configuration remains deployment
+work. A same-tab hash navigation issue found during this check was fixed.
