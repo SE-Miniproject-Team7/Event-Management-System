@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
+import { parseISTDateTime } from '../utils/dateTime'
 
 const initialForm = {
   title: '',
@@ -65,9 +66,9 @@ function CreateEventPage() {
     setError('')
     setSuccess('')
 
-    const start = new Date(form.startAt)
-    const end = new Date(form.endAt)
-    const deadline = new Date(form.registrationDeadline)
+    const start = parseISTDateTime(form.startAt)
+    const end = parseISTDateTime(form.endAt)
+    const deadline = parseISTDateTime(form.registrationDeadline)
     const capacity = Number(form.capacity)
 
     if (form.title.trim().length < 3 || form.title.trim().length > 100) {
@@ -88,6 +89,7 @@ function CreateEventPage() {
       setError('Description must not exceed 2000 characters.')
       return
     }
+
     if (form.venue.trim().length > 100) {
       setError('Venue must not exceed 100 characters.')
       return
@@ -163,6 +165,7 @@ function CreateEventPage() {
         <p>
           Enter your event details and submit them for admin approval.
           Your event will not be published until it is approved.
+          All event times are entered in Indian Standard Time (IST).
         </p>
       </div>
 
@@ -242,7 +245,7 @@ function CreateEventPage() {
 
         <div className="management-form-grid">
           <label>
-            Start date and time
+            Start date and time (IST)
             <input
               type="datetime-local"
               name="startAt"
@@ -253,7 +256,7 @@ function CreateEventPage() {
           </label>
 
           <label>
-            End date and time
+            End date and time (IST)
             <input
               type="datetime-local"
               name="endAt"
@@ -266,7 +269,7 @@ function CreateEventPage() {
 
         <div className="management-form-grid">
           <label>
-            Registration deadline
+            Registration deadline (IST)
             <input
               type="datetime-local"
               name="registrationDeadline"

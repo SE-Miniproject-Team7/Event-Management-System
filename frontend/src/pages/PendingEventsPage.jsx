@@ -1,6 +1,6 @@
-
 import { useCallback, useEffect, useState } from 'react'
 import api from '../services/api'
+import { formatIST } from '../utils/dateTime'
 
 function PendingEventsPage() {
   const [events, setEvents] = useState([])
@@ -120,7 +120,7 @@ function PendingEventsPage() {
           }}
           disabled={loading}
         >
-          {loading ? 'Refreshing…' : 'Refresh'}
+          {loading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
 
@@ -136,7 +136,7 @@ function PendingEventsPage() {
         </p>
       )}
 
-      {loading && <p role="status">Loading pending events…</p>}
+      {loading && <p role="status">Loading pending events...</p>}
 
       {!loading && !error && events.length === 0 && (
         <div className="management-empty">
@@ -172,29 +172,17 @@ function PendingEventsPage() {
 
                 <div>
                   <dt>Starts</dt>
-                  <dd>
-                    {event.startAt
-                      ? new Date(event.startAt).toLocaleString()
-                      : 'Not specified'}
-                  </dd>
+                  <dd>{formatIST(event.startAt)}</dd>
                 </div>
 
                 <div>
                   <dt>Ends</dt>
-                  <dd>
-                    {event.endAt
-                      ? new Date(event.endAt).toLocaleString()
-                      : 'Not specified'}
-                  </dd>
+                  <dd>{formatIST(event.endAt)}</dd>
                 </div>
 
                 <div>
                   <dt>Registration deadline</dt>
-                  <dd>
-                    {event.registrationDeadline
-                      ? new Date(event.registrationDeadline).toLocaleString()
-                      : 'Not specified'}
-                  </dd>
+                  <dd>{formatIST(event.registrationDeadline)}</dd>
                 </div>
               </dl>
 
@@ -220,7 +208,7 @@ function PendingEventsPage() {
                   onClick={() => handleDecision(event._id, 'approve')}
                   disabled={Boolean(busyId)}
                 >
-                  {busyId === event._id ? 'Processing…' : 'Approve event'}
+                  {busyId === event._id ? 'Processing...' : 'Approve event'}
                 </button>
 
                 <button
@@ -229,7 +217,7 @@ function PendingEventsPage() {
                   onClick={() => handleDecision(event._id, 'reject')}
                   disabled={Boolean(busyId)}
                 >
-                  {busyId === event._id ? 'Processing…' : 'Reject event'}
+                  {busyId === event._id ? 'Processing...' : 'Reject event'}
                 </button>
               </div>
             </article>
