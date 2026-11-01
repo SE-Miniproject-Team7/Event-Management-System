@@ -33,7 +33,6 @@ export default function EventReportsPage({ user, checkingAuth }) {
   const [eventId, setEventId] = useState('')
   const [report, setReport] = useState(null)
   const [loadingEvents, setLoadingEvents] = useState(true)
-  const [loadingReport, setLoadingReport] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState('')
   const [revision, setRevision] = useState(0)
@@ -48,7 +47,9 @@ export default function EventReportsPage({ user, checkingAuth }) {
     api.get('/events/mine')
       .then(response => {
         if (!active) return
-        setEvents(response.data?.items || [])
+
+        const items = response.data?.items || []
+        setEvents(items)
       })
       .catch(err => {
         if (active) {
@@ -68,16 +69,9 @@ export default function EventReportsPage({ user, checkingAuth }) {
   }, [isOrganizer, checkingAuth, revision])
 
   useEffect(() => {
-    if (!eventId || !isOrganizer || checkingAuth) {
-      setReport(null)
-      return
-    }
+    if (!eventId || !isOrganizer || checkingAuth) return
 
     let active = true
-
-    setLoadingReport(true)
-    setError('')
-    setReport(null)
 
     api.get(`/events/${eventId}/report`)
       .then(response => {
@@ -90,9 +84,6 @@ export default function EventReportsPage({ user, checkingAuth }) {
             'Could not load this event report.'
           )
         }
-      })
-      .finally(() => {
-        if (active) setLoadingReport(false)
       })
 
     return () => {
@@ -208,6 +199,7 @@ export default function EventReportsPage({ user, checkingAuth }) {
             value={eventId}
             onChange={event => {
               setEventId(event.target.value)
+              setReport(null)
               setError('')
             }}
           >
@@ -227,11 +219,11 @@ export default function EventReportsPage({ user, checkingAuth }) {
         </p>
       )}
 
-      {loadingReport && (
+      {eventId && !report && !error && (
         <p role="status">Loading attendance report...</p>
       )}
 
-      {report && summary && !loadingReport && (
+      {report && summary && (
         <>
           <section className="report-event-details">
             <div>
