@@ -162,7 +162,7 @@ router.patch('/:id', authenticate, requireRole('Organizer'), asyncHandler(async 
     if (typeof next.title !== 'string' || next.title.trim().length < 3 || next.title.trim().length > 100) fields.push({ field: 'title', message: 'Title must be 3 to 100 characters' });
     if (typeof next.description !== 'string' || !next.description.trim() || next.description.trim().length > 2000) fields.push({ field: 'description', message: 'Description is required (max 2000 characters)' });
     if (typeof next.venue !== 'string' || !next.venue.trim() || next.venue.trim().length > 100) fields.push({ field: 'venue', message: 'Venue is required (max 100 characters)' });
-    if (isNaN(next.startAt)) fields.push({ field: 'startAt', message: 'Valid start date required' });
+    if (isNaN(next.startAt) || next.startAt <= new Date()) fields.push({ field: 'startAt', message: 'Start date must be in the future' });
     if (isNaN(next.endAt) || next.endAt <= next.startAt) fields.push({ field: 'endAt', message: 'End must be after start' });
     if (isNaN(next.registrationDeadline) || next.registrationDeadline > next.startAt) fields.push({ field: 'registrationDeadline', message: 'Deadline must be on or before the start' });
     if (!Number.isInteger(next.capacity) || next.capacity < 1 || next.capacity > 10000 || next.capacity < event.seatsTaken) {
