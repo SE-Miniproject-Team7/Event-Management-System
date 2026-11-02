@@ -43,6 +43,40 @@ TC-PERF-01 is not a full pass if the degradation criterion fails, even when
 absolute latency and error thresholds pass. The original JMeter procedure and
 acceptance of the tool substitution remain for the team's evaluator to review.
 
+## Owner review: baseline validity and search performance
+
+The baseline and loaded search phases use the same 1,000-user/5,000-event
+database, endpoint, query term, and page cycle. The 30 baseline searches are
+sequential; the 500 loaded searches run as five synchronized batches of 100
+requests over five minutes. The script restarts the Express server between
+phases while retaining the MongoDB dataset and connection. This compares
+unloaded sequential latency with the measured 100-user burst workload, which
+is consistent with the test plan's baseline-then-load intent for this Node
+substitute.
+
+The comparison has limits: its baseline has only 30 samples versus 500 loaded
+samples, the virtual users issue synchronized bursts, and it is not the
+specified JMeter run. The reported 12.37 ms baseline p95 is therefore a weak
+estimate of general unloaded p95; the 267.22 ms loaded p95 is the measured
+result for the exact local workload. The ratio is about 21.6x (2059.69%
+degradation). Search meets the 2 s absolute p95 and <1% error gates, but
+TC-PERF-01 still **fails** its unchanged <=10% degradation gate.
+
+Search currently uses case-insensitive substring regular expressions over
+title and description, plus a separate count query. The existing event index
+supports Published/start-time filtering and ordering, but the evidence contains
+no query-plan or profiler output to isolate the cost of the text search, count,
+or database queueing. Optimization is needed before claiming the original
+degradation gate passes; this run does not prove which implementation change
+will help. Profile the actual query, make a behavior-preserving optimization
+if indicated, and rerun the same acceptance criteria. Keep the measured
+values and <=10% threshold unchanged. No optimization result is claimed here.
+
+The raw evidence stores aggregate latency summaries rather than every request
+sample, so the recorded p95 values cannot be independently recomputed from
+request-level observations. Future runs should retain raw-safe latency samples
+or a histogram alongside the summary.
+
 ## Local health observation
 
 58 of 58 sampled /health requests returned 200

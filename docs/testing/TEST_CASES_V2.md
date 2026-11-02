@@ -220,7 +220,7 @@ Requirements: EMS-F-021.
 
 **Original steps and expected result:** EMS-F-021 Integration / Functional Concurrent registrations never exceed capacity. Event capacity 10. Script 60 different attendees registering at the same moment (parallel requests). Exactly 10 Confirmed and 50 Waitlisted; seatsTaken equals 10; no duplicates.
 
-**Sprint-update execution notes:** Extend the original 60-user case to assert unique waitlist positions 1–50 and FIFO compaction. Use a replica-set test database.
+**Sprint-update execution notes:** The real replica-set test extends the original 60-user case with unique positions 1–50, deterministic FIFO sequence ordering, promotion of the earliest waiter, and contiguous positions after both confirmed and waitlisted cancellations. Use an isolated replica-set test database.
 
 **Evidence references:** registrations.concurrent.integration.cjs.
 
@@ -320,7 +320,7 @@ Requirements: EMS-NF-001, EMS-NF-008.
 
 **Original steps and expected result:** EMS-NF-001, EMS-NF-008 System / Non- functional Search load test. Seed 1,000 registered users and 5,000 events. Run a baseline search test and then run JMeter with 100 concurrent users for 5 minutes under the required dataset. 95th percentile response time is at most 2 s, error rate is below 1%, and response-time degradation compared with the baseline does not exceed 10%. Design inspection confirms that the API tier maintains no per-user session state in server memory.
 
-**Sprint-update execution notes:** Keep the original 1,000-user/5,000-event, 100-user, five-minute thresholds. The local executable uses Node HTTP instead of JMeter, with a recorded 60.5-second per-user think time to respect the unchanged 100/minute/IP limiter. This tool/workload substitution is disclosed, not silently treated as original JMeter execution.
+**Sprint-update execution notes:** Keep the original 1,000-user/5,000-event, 100-user, five-minute thresholds and <=10% degradation limit. The local executable uses Node HTTP, not JMeter, with a recorded 60.5-second per-user interval to respect the unchanged 100/minute/IP limiter. It measured 30 sequential baseline searches and 500 loaded searches in five synchronized batches of 100. Search p95 was 267.22 ms versus a 12.37 ms baseline p95 (2059.69% degradation): absolute latency and error gates passed, but the degradation gate failed. This is evidence for the exact localhost workload, not an equivalent JMeter run; the baseline sample is small and query profiling is absent. Preserve the result and threshold. Do not mark TC-PERF-01 as passed until a valid run meets every original gate.
 
 **Evidence references:** timed localhost search workload.
 
