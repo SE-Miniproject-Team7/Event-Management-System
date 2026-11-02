@@ -23,10 +23,10 @@ describe('24-hour reminder scheduler (EMS-F-023 / TC-NTF-02)', () => {
 
   test('queries only published events entering the 24-hour window using the supplied clock', async () => {
     const now = new Date('2030-01-01T00:00:00.000Z');
-    await runReminderScheduler({ now, windowMs: 60000 });
+    await runReminderScheduler({ now });
     expect(Event.find).toHaveBeenCalledWith({
       status: 'Published',
-      startAt: { $gte: new Date('2030-01-02T00:00:00.000Z'), $lte: new Date('2030-01-02T00:01:00.000Z') },
+      startAt: { $gte: new Date('2030-01-01T23:45:00.000Z'), $lte: new Date('2030-01-02T00:15:00.000Z') },
     });
   });
 
@@ -36,7 +36,7 @@ describe('24-hour reminder scheduler (EMS-F-023 / TC-NTF-02)', () => {
     Event.find.mockReturnValue({ select: jest.fn().mockResolvedValue([event]) });
     Registration.find.mockReturnValue({ populate: jest.fn().mockResolvedValue([registration, { _id: 'reg-2', userId: null }]) });
 
-    const result = await runReminderScheduler({ now: new Date('2030-01-01T00:00:00.000Z'), windowMs: 60000 });
+    const result = await runReminderScheduler({ now: new Date('2030-01-01T00:00:00.000Z'), toleranceMs: 15 * 60 * 1000 });
 
     expect(result).toEqual({ events: 1, queued: 1 });
     expect(Registration.find).toHaveBeenCalledWith({ eventId: 'event-1', status: 'Confirmed' });
