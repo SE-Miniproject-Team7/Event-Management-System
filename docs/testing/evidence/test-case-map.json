@@ -6,7 +6,7 @@
     ],
     "status": "PARTIAL",
     "evidence": "accountRegistration.test.js; security.integration.cjs",
-    "update": "Use a fresh attendee email and the current 3\u201360 name / 8\u201364 password rules. Verify the three-second target separately; latest unit counts alone do not establish it."
+    "update": "Use a fresh attendee email and the current 3–60 name / 8–64 password rules. Verify the three-second target separately; latest unit counts alone do not establish it."
   },
   {
     "id": "TC-AUTH-02",
@@ -62,7 +62,7 @@
     ],
     "status": "AUTOMATED EVIDENCE",
     "evidence": "users.test.js; fresh localhost profile API check",
-    "update": "The merged implementation is PUT /api/users/me. Validate 3\u201360 trimmed name and exactly 10 phone digits. Profile API currently returns a validation message rather than a structured phone field entry; record this presentation difference. No profile-edit screen was added by #95."
+    "update": "The merged implementation is PUT /api/users/me. Validate 3–60 trimmed name and exactly 10 phone digits. Profile API currently returns a validation message rather than a structured phone field entry; record this presentation difference. No profile-edit screen was added by #95."
   },
   {
     "id": "TC-EVT-01",
@@ -186,7 +186,7 @@
     ],
     "status": "AUTOMATED EVIDENCE",
     "evidence": "registrations.concurrent.integration.cjs",
-    "update": "Extend the original 60-user case to assert unique waitlist positions 1\u201350 and FIFO compaction. Use a replica-set test database."
+    "update": "Extend the original 60-user case to assert unique waitlist positions 1–50 and FIFO compaction. Use a replica-set test database."
   },
   {
     "id": "TC-NTF-01",
@@ -204,7 +204,7 @@
     ],
     "status": "AUTOMATED EVIDENCE",
     "evidence": "reminder.scheduler.integration.cjs; notification.worker.test.js",
-    "update": "Use controlled scheduler time. Include repeated/concurrent runs, restart catch-up within \u00b115 minutes, current recipient eligibility and suppression of stale/out-of-window jobs."
+    "update": "Use controlled scheduler time. Include repeated/concurrent runs, restart catch-up within ±15 minutes, current recipient eligibility and suppression of stale/out-of-window jobs."
   },
   {
     "id": "TC-NTF-03",
@@ -276,9 +276,9 @@
       "EMS-NF-001",
       "EMS-NF-008"
     ],
-    "status": "LOAD CHECK",
-    "evidence": "timed localhost search workload",
-    "update": "Keep the original 1,000-user/5,000-event, 100-user, five-minute thresholds. The local executable uses Node HTTP instead of JMeter, with a recorded 60.5-second per-user think time to respect the unchanged 100/minute/IP limiter. This tool/workload substitution is disclosed, not silently treated as original JMeter execution."
+    "status": "FAIL — degradation criterion",
+    "evidence": "evidence/load-results.json; LOAD_TEST_REPORT.md; tools/localhost-load.cjs",
+    "update": "Search p95 267.22 ms and 0% errors pass their gates; baseline p95 12.37 ms gives 2059.69% degradation and fails the unchanged <=10% limit. Node HTTP substitute, not JMeter; baseline n=30 versus loaded n=500 and synchronized batches. Preserve measurements; profile before optimization; do not claim TC-PERF-01 passes."
   },
   {
     "id": "TC-PERF-02",

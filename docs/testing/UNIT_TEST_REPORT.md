@@ -22,6 +22,14 @@ transactions and HTTP API calls. Passing these counts is not proof that all
 
 Frontend ESLint and the Vite production build also passed.
 
+## Owner review
+
+Palash reviewed the counts against `evidence/automated-results.json` and the load
+evidence. The 328 backend, 54 frontend, and 47 real-MongoDB integration tests
+are reported as passing for the tested commit above; this task did not rerun
+those unchanged suites. These functional test counts do not convert the failed
+search degradation gate into a pass. See the load report review below.
+
 ## Per-file automated results
 
 | Runner | File | Assertions | Passed | Failed |
