@@ -162,6 +162,31 @@ describe('Audit log integration (TC-SEC-05)', { skip: !process.env.MONGO_TEST_UR
     assert.equal(cancelledJob.payload.eventTitle, pending.title);
     assert.equal(cancelledJob.payload.idempotencyKey, `event-cancellation:${pending._id}:${(await Registration.findOne({ regCode: 'EVENT-EMAIL-CANCEL' }))._id}`);
   });
+  it('rolls back event edits and creates no email job when notification enqueue fails', async () => {
+    await Registration.create({
+      eventId: published._id,
+      userId: attendee._id,
+      regCode: 'ROLLBACK-EMAIL-EDIT',
+      status: 'Confirmed',
+    });
+    const originalCreate = NotificationJob.create;
+    NotificationJob.create = async () => { throw new Error('Synthetic notification queue failure'); };
+    try {
+      const response = await request(app)
+        .patch(`/api/events/${published._id}`)
+        .set('Cookie', cookie(organizer))
+        .send({ title: 'Must not commit' });
+
+      assert.equal(response.status, 500);
+      const unchanged = await Event.findById(published._id);
+      assert.equal(unchanged.title, published.title);
+      assert.equal(unchanged.status, 'Published');
+      assert.equal(await NotificationJob.countDocuments(), 0);
+      assert.equal(await AuditLog.countDocuments({ action: 'EVENT_UPDATED' }), 0);
+    } finally {
+      NotificationJob.create = originalCreate;
+    }
+  });
   it('rolls back security changes if the audit write fails, and issues no login cookie', async () => {
     const registration = await Registration.create({ eventId: published._id, userId: attendee._id, regCode: 'ROLLBACK', status: 'Confirmed' });
     await Event.updateOne({ _id: published._id }, { $set: { seatsTaken: 1 } });
