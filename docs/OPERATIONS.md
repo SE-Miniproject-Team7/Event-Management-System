@@ -42,3 +42,8 @@ RESTORE_URI='mongodb://localhost:27017/ems_test_restore' BACKUP_FILE='backups/sn
 The restore command refuses non-test database names and non-empty targets. Never point a
 recovery test at a production database. The integration test checks collection counts,
 ObjectIds, dates, and a sample record after restore.
+
+On Windows, POSIX mode 0600 does not establish an NTFS ACL. Keep backups in
+a directory whose Windows access permissions restrict them to the intended
+operator. The restore test checks mode 0600 only on Unix; Windows ACLs were
+not verified by that assertion.
