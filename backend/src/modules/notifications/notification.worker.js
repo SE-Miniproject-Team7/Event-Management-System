@@ -259,7 +259,10 @@ async function claimJob() {
   );
 }
 
-async function reminderIsEligible(job) {
+const REMINDER_DAY_MS = 24 * 60 * 60 * 1000;
+const REMINDER_TOLERANCE_MS = 15 * 60 * 1000;
+
+async function reminderIsEligible(job, now = new Date()) {
   const payload = job.payload || {};
   if (job.type !== 'EVENT_REMINDER') return true;
   if (!payload.eventId || !payload.registrationId || !payload.scheduledStartAt) return false;
@@ -270,9 +273,14 @@ async function reminderIsEligible(job) {
   ]);
   if (!event || !registration || event.status !== 'Published' || registration.status !== 'Confirmed') return false;
   if (String(registration.eventId) !== String(event._id)) return false;
+
   const currentStart = new Date(event.startAt).getTime();
   const scheduledStart = new Date(payload.scheduledStartAt).getTime();
-  return Number.isFinite(currentStart) && currentStart === scheduledStart && currentStart > Date.now();
+  const timeUntilStart = currentStart - now.getTime();
+  return Number.isFinite(currentStart)
+    && currentStart === scheduledStart
+    && timeUntilStart >= REMINDER_DAY_MS - REMINDER_TOLERANCE_MS
+    && timeUntilStart <= REMINDER_DAY_MS + REMINDER_TOLERANCE_MS;
 }
 
 async function skipReminder(job) {
@@ -418,6 +426,7 @@ function stopNotificationWorker() {
 module.exports = {
   processDueNotifications,
   recoverExhaustedJobs,
+  reminderIsEligible,
   startNotificationWorker,
   stopNotificationWorker,
 };
