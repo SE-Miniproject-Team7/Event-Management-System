@@ -7,7 +7,6 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
-
 import HomePage from './pages/HomePage.jsx'
 import CreateEventPage from './pages/CreateEventPage.jsx'
 import PendingEventsPage from './pages/PendingEventsPage.jsx'
@@ -22,6 +21,7 @@ import CheckInPage from './pages/CheckInPage.jsx'
 import EventReportsPage from './pages/EventReportsPage.jsx'
 import AdminUsersPage from './pages/AdminUsersPage.jsx'
 import AdminSummaryPage from './pages/AdminSummaryPage.jsx'
+import AdminCategoriesPage from './pages/AdminCategoriesPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 
 import api from './services/api'
@@ -125,8 +125,9 @@ function App() {
 
           {user?.role === 'Admin' && (
             <>
-              <Link to="/admin/users">Manage Users</Link>
               <Link to="/admin/summary">Admin Summary</Link>
+              <Link to="/admin/users">Manage Users</Link>
+              <Link to="/admin/categories">Manage categories</Link>
             </>
           )}
 
@@ -162,6 +163,16 @@ function App() {
       <main className="app-main" id="main-content" tabIndex="-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
+
+          <Route
+            path="/admin/categories"
+            element={
+              <AdminCategoriesPage
+                user={user}
+                checkingAuth={checkingAuth}
+              />
+            }
+          />
 
           <Route
             path="/organizer/events/new"

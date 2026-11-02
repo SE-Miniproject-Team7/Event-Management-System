@@ -1,5 +1,4 @@
-﻿
-jest.mock('../src/middleware/auth', () => ({
+﻿jest.mock('../src/middleware/auth', () => ({
   authenticate: (req, res, next) => {
     req.user = {
       _id: {
@@ -305,6 +304,91 @@ describe('Attendee registration API', () => {
     expect(session.withTransaction).toHaveBeenCalledTimes(1);
     expect(session.endSession).toHaveBeenCalledTimes(1);
     expect(enqueueNotification).not.toHaveBeenCalled();
+  });
+
+  // EMS-F-020 / TC-REG-05
+  test('returns all registration statuses for the authenticated attendee', async () => {
+    const registrations = [
+      {
+        _id: 'reg-confirmed',
+        regCode: 'REG-1',
+        status: 'Confirmed',
+        eventId: {
+          title: 'Confirmed Event',
+          startAt: new Date('2027-11-10T10:00:00Z'),
+          venue: 'Hall A',
+        },
+      },
+      {
+        _id: 'reg-waitlisted',
+        regCode: 'REG-2',
+        status: 'Waitlisted',
+        waitlistPosition: 1,
+        eventId: {
+          title: 'Waitlisted Event',
+          startAt: new Date('2027-11-10T10:00:00Z'),
+          venue: 'Hall B',
+        },
+      },
+      {
+        _id: 'reg-cancelled',
+        regCode: 'REG-3',
+        status: 'Cancelled',
+        eventId: {
+          title: 'Cancelled Event',
+          startAt: new Date('2027-11-10T10:00:00Z'),
+          venue: 'Hall C',
+        },
+      },
+      {
+        _id: 'reg-checked-in',
+        regCode: 'REG-4',
+        status: 'Checked-in',
+        eventId: {
+          title: 'Checked-in Event',
+          startAt: new Date('2027-11-10T10:00:00Z'),
+          venue: 'Hall D',
+        },
+      },
+    ];
+
+    const findQuery = {
+      sort: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockResolvedValue(registrations),
+    };
+
+    Registration.find.mockReturnValue(findQuery);
+
+    const res = await request(app).get('/api/registrations/me');
+
+    expect(res.status).toBe(200);
+    expect(Registration.find).toHaveBeenCalledWith({
+      userId: expect.objectContaining({
+        toString: expect.any(Function),
+      }),
+    });
+    expect(findQuery.sort).toHaveBeenCalledWith({ createdAt: -1 });
+    expect(findQuery.populate).toHaveBeenCalledWith(
+      'eventId',
+      'title startAt venue',
+    );
+
+    expect(res.body.items).toHaveLength(4);
+    expect(res.body.items.map((item) => item.status)).toEqual([
+      'Confirmed',
+      'Waitlisted',
+      'Cancelled',
+      'Checked-in',
+    ]);
+
+    expect(res.body.items[1]).toMatchObject({
+      regCode: 'REG-2',
+      waitlistPosition: 1,
+      event: {
+        title: 'Waitlisted Event',
+        venue: 'Hall B',
+      },
+    });
   });
 
   test('requires login for the registration endpoints', async () => {
