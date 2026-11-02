@@ -57,6 +57,34 @@ Thank you.`,
     };
   }
 
+  if (job.type === 'WAITLIST_PROMOTION') {
+    const name = payload.attendeeName || 'Attendee';
+    const event = payload.eventTitle || 'the event';
+    const venue = payload.venue || 'the announced venue';
+    const startAt = payload.startAt
+      ? new Intl.DateTimeFormat('en-IN', {
+        dateStyle: 'full',
+        timeStyle: 'short',
+        timeZone: 'Asia/Kolkata',
+      }).format(new Date(payload.startAt))
+      : 'Please check the event page for the schedule.';
+
+    return {
+      subject: job.subject,
+      text: `Hello ${name},
+
+A place is now available for ${event}. You have been promoted from the waitlist to a confirmed registration.
+Event time (India): ${startAt}
+Venue: ${venue}
+
+Please sign in to view your registration details.`,
+      html: `<p>Hello ${escapeHtml(name)},</p>
+        <p>A place is now available for <strong>${escapeHtml(event)}</strong>. You have been promoted from the waitlist to a confirmed registration.</p>
+        <p>Event time (India): ${escapeHtml(startAt)}<br>Venue: ${escapeHtml(venue)}</p>
+        <p>Please sign in to view your registration details.</p>`,
+    };
+  }
+
   if (job.type === 'EVENT_CANCELLATION') {
     const name = payload.attendeeName || 'Attendee';
     const event = payload.eventTitle || 'your event';

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Event = require('../../models/Event');
 const Registration = require('../../models/Registration');
+const User = require('../../models/User');
 const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
@@ -180,6 +181,11 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
       throw new AppError(409, 'CANCEL_NOT_ALLOWED', 'This registration cannot be cancelled');
     }
 
+    const event = await Event.findById(reg.eventId).session(session);
+    if (!event || !event.startAt || new Date(event.startAt) <= new Date()) {
+      throw new AppError(409, 'CANCEL_NOT_ALLOWED', 'Registration cannot be cancelled after the event starts');
+    }
+
     const wasConfirmed = reg.status === 'Confirmed';
     const oldPosition = reg.waitlistPosition;
 
@@ -208,7 +214,32 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
       }
 
       // A promotion replaces the cancelled confirmed attendee, so seatsTaken
-      // stays unchanged. If nobody is waiting, release the seat.
+      // stays unchanged. Queue the email in this transaction so the promotion
+      // cannot commit without its notification.
+      if (promoted) {
+        const attendee = await User.findById(promoted.userId)
+          .select('name email')
+          .session(session);
+
+        if (!attendee?.email) {
+          throw new Error('Promoted attendee has no notification address');
+        }
+
+        await enqueueNotification({
+          type: 'WAITLIST_PROMOTION',
+          recipient: attendee.email,
+          subject: `Your waitlist place is confirmed: ${event.title}`,
+          payload: {
+            idempotencyKey: `waitlist-promotion:${reg.eventId}:${promoted._id}`,
+            attendeeName: attendee.name || 'Attendee',
+            eventTitle: event.title,
+            startAt: event.startAt,
+            venue: event.venue || '',
+          },
+          session,
+        });
+      }
+
       if (!promoted) {
         const eventUpdate = await Event.updateOne(
           { _id: reg.eventId, seatsTaken: { $gt: 0 } },

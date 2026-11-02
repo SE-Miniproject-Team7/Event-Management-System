@@ -128,6 +128,46 @@ describe('Notification worker', () => {
     );
   });
 
+  test('sends a waitlist promotion email and records successful delivery', async () => {
+    const promotionJob = {
+      ...job,
+      type: 'WAITLIST_PROMOTION',
+      subject: 'Your waitlist place is confirmed: Design Week',
+      payload: {
+        attendeeName: '<Waitlisted Attendee>',
+        eventTitle: '<Design Week>',
+        startAt: '2030-01-01T10:00:00.000Z',
+        venue: '<Hall A>',
+      },
+    };
+    NotificationJob.findOneAndUpdate.mockResolvedValueOnce(promotionJob);
+
+    await processDueNotifications();
+
+    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: job.recipient,
+      subject: promotionJob.subject,
+    }));
+    const sentEmail = sendEmail.mock.calls[0][0];
+    expect(sentEmail.text).toContain('Event time (India): Tuesday, 1 January 2030');
+    expect(sentEmail.text).toContain('Venue: <Hall A>');
+    expect(sentEmail.html).toContain('&lt;Design Week&gt;');
+    expect(sentEmail.html).toContain('&lt;Hall A&gt;');
+    expect(sentEmail.html).not.toContain('<Design Week>');
+    expect(NotificationLog.create).toHaveBeenCalledWith(expect.objectContaining({
+      jobId: 'job-123',
+      type: 'WAITLIST_PROMOTION',
+      attempt: 1,
+      status: 'Sent',
+    }));
+    expect(NotificationJob.updateOne).toHaveBeenCalledWith(
+      { _id: 'job-123', status: 'Processing' },
+      expect.objectContaining({
+        $set: expect.objectContaining({ status: 'Sent', lockedAt: null }),
+      })
+    );
+  });
+
   test('records failed attempt and schedules a retry after approximately one minute', async () => {
     NotificationJob.findOneAndUpdate.mockResolvedValueOnce(job);
     sendEmail.mockRejectedValueOnce(new Error('SMTP unavailable'));
