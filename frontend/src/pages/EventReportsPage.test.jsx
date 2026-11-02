@@ -148,6 +148,58 @@ describe('Event Reports Page', () => {
     )
   })
 
+  it('refetches the selected report when refresh is clicked', async () => {
+    api.get
+      .mockResolvedValueOnce({
+        data: { items: [event] },
+      })
+      .mockResolvedValueOnce({
+        data: report,
+      })
+      .mockResolvedValueOnce({
+        data: { items: [event] },
+      })
+      .mockResolvedValueOnce({
+        data: report,
+      })
+
+    renderPage()
+
+    await screen.findByRole('option', {
+      name: 'Tech Conference',
+    })
+
+    fireEvent.change(screen.getByLabelText('Select your event'), {
+      target: { value: 'event123' },
+    })
+
+    await screen.findByRole('heading', {
+      name: 'Tech Conference',
+    })
+
+    expect(
+      api.get.mock.calls.filter(
+        ([url]) => url === '/events/event123/report'
+      )
+    ).toHaveLength(1)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Refresh events' })
+    )
+
+    await waitFor(() => {
+      expect(
+        api.get.mock.calls.filter(
+          ([url]) => url === '/events/event123/report'
+        )
+      ).toHaveLength(2)
+    })
+
+    expect(api.get).toHaveBeenLastCalledWith(
+      '/events/event123/report'
+    )
+  })
+
   it('displays an empty registration message', async () => {
     api.get
       .mockResolvedValueOnce({

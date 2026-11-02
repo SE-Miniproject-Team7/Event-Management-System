@@ -89,8 +89,7 @@ export default function EventReportsPage({ user, checkingAuth }) {
     return () => {
       active = false
     }
-  }, [eventId, isOrganizer, checkingAuth])
-
+  }, [eventId, isOrganizer, checkingAuth, revision])
   function refresh() {
     setReport(null)
     setError('')
