@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from 'react'
+﻿
+import { useEffect, useState } from 'react'
 import {
   Link,
   Route,
@@ -188,12 +189,23 @@ function App() {
 
           <Route
             path="/admin/users"
-            element={<AdminUsersPage />}
+            element={
+              <AdminUsersPage
+                user={user}
+                checkingAuth={checkingAuth}
+                onSelfUpdate={setUser}
+              />
+            }
           />
 
           <Route
             path="/admin/summary"
-            element={<AdminSummaryPage />}
+            element={
+              <AdminSummaryPage
+                user={user}
+                checkingAuth={checkingAuth}
+              />
+            }
           />
 
           <Route
@@ -215,6 +227,7 @@ function App() {
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
           <Route path="/my-events" element={<MyEventsPage />} />
+
           <Route
             path="/registrations/me"
             element={<MyRegistrationsPage />}
