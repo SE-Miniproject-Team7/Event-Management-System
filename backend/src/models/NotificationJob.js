@@ -13,6 +13,7 @@ const notificationJobSchema = new mongoose.Schema({
       'EVENT_UPDATED',
       'EVENT_APPROVED',
       'EVENT_REJECTED',
+      'EVENT_REMINDER',
     ],
   },
   recipient: {
