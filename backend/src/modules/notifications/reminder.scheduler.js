@@ -13,7 +13,7 @@ async function runReminderScheduler({ now = new Date(), windowMs = SCHEDULER_INT
   const windowEnd = new Date(windowStart.getTime() + windowMs);
   const events = await Event.find({
     status: 'Published',
-    startAt: { $gt: windowStart, $lte: windowEnd },
+    startAt: { $gte: windowStart, $lte: windowEnd },
   }).select('_id title venue startAt');
 
   let queued = 0;
