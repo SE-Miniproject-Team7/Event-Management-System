@@ -87,3 +87,26 @@ The reset bearer token is carried in a URL fragment, then submitted in the reset
 POST body, to avoid HTTP access-log exposure. See PASSWORD_RESET.md for queue
 configuration, session behaviour and verification limits. SAD endpoint/status
 contracts and the 30-minute single-use requirement are preserved.
+
+
+## Deliverable 3 localhost evaluation — 2 November 2026
+
+The team requested localhost-only evaluation with no hosting charge. The
+submitted transport-security test TC-SEC-02 and deployed ZAP baseline are
+retained as NOT EXECUTED, rather than reported as passing or removed. No formal
+instructor waiver is asserted here. Production HTTPS cookie behaviour is not
+established by local HTTP tests.
+
+Test Cases v2 and the four required reports are in docs/testing/. All 44 original
+case IDs and original expected results are preserved, with sprint-change notes.
+The report UI separately counts still-Confirmed and Checked-in; their sum is
+the occupied booking count used for attendance percentage. CSV retains the five
+required attendee fields and adds event/summary columns. Profile API validation
+returns a message rather than a structured field-specific error. These are
+explicit differences to review against the submitted documents.
+
+Timed performance verification uses a disclosed Node HTTP workload in place of
+JMeter. Its think time, dataset, concurrency, duration and actual measurements
+are recorded in LOAD_TEST_REPORT.md. Tool equivalence/acceptance is not claimed
+without evaluator agreement. Five-person usability, missing browser runs and
+Lighthouse scores remain pending until measured. See SYSTEM_VALIDATION_REPORT.md.
