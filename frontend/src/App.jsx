@@ -10,6 +10,7 @@ import {
 import CheckInPage from './pages/CheckInPage.jsx'
 import AdminSummaryPage from './pages/AdminSummaryPage.jsx'
 import AdminUsersPage from './pages/AdminUsersPage.jsx'
+import AdminCategoriesPage from './pages/AdminCategoriesPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import CreateEventPage from './pages/CreateEventPage.jsx'
 import PendingEventsPage from './pages/PendingEventsPage.jsx'
@@ -110,6 +111,7 @@ function App() {
           {user?.role === 'Admin' && <>
             <Link to="/admin/summary">Platform summary</Link>
             <Link to="/admin/users">Manage users</Link>
+            <Link to="/admin/categories">Manage categories</Link>
           </>}
 
           {!checkingAuth && !user && (
@@ -145,6 +147,10 @@ function App() {
           <Route path="/organizer/checkin" element={<CheckInPage user={user} checkingAuth={checkingAuth} />} />
           <Route path="/admin/summary" element={<AdminSummaryPage user={user} checkingAuth={checkingAuth} />} />
           <Route path="/admin/users" element={<AdminUsersPage user={user} checkingAuth={checkingAuth} onSelfUpdate={setUser} />} />
+          <Route
+            path="/admin/categories"
+            element={<AdminCategoriesPage user={user} checkingAuth={checkingAuth} />}
+          />
           <Route
             path="/organizer/events/new"
             element={<CreateEventPage />}
