@@ -13,12 +13,12 @@ const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI).then(async () => {
   await AuditLog.init();
 
-  console.log('MongoDB connected');
+  console.log(JSON.stringify({ level: 'info', event: 'database_connected' }));
 
   startNotificationWorker();
 
   const server = app.listen(PORT, () => {
-    console.log(`API on http://localhost:${PORT}`);
+    console.log(JSON.stringify({ level: 'info', event: 'api_listening', port: Number(PORT) }));
   });
 
   const shutdown = async () => {
@@ -33,8 +33,9 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
 }).catch(() => {
-  console.error(
-    'Database startup failed. Check database availability and environment configuration.'
-  );
+  console.error(JSON.stringify({
+    level: 'error',
+    event: 'database_startup_failed',
+  }));
   process.exit(1);
 });

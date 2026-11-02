@@ -14,7 +14,9 @@
     "dev": "nodemon src/server.js",
     "seed": "node src/seed.js",
     "test:security": "jest --runInBand tests/security.test.js tests/accountRegistration.test.js tests/auth.test.js tests/rateLimit.test.js tests/adminUsers.test.js tests/audit.model.test.js tests/audit.service.test.js tests/checkin.test.js tests/events.test.js",
-    "test:reset": "node --test tests/reset.integration.cjs"
+    "test:reset": "node --test tests/reset.integration.cjs",
+    "backup:create": "node scripts/databaseBackup.js backup",
+    "backup:restore": "node scripts/databaseBackup.js restore"
   },
   "keywords": [],
   "author": "",
@@ -31,7 +33,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.4",
     "node-cron": "^4.6.0",
-    "nodemailer": "^10.3.1"
+    "nodemailer": "^10.3.1",
+    "bson": "^7.3.3"
   },
   "devDependencies": {
     "jest": "^30.5.2",

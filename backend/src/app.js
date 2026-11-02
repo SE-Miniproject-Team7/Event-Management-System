@@ -7,10 +7,12 @@ const { createApiLimiter, createLoginLimiter } = require('./middleware/rateLimit
 const mongoose = require('mongoose');
 const AppError = require('./utils/AppError');
 const errorHandler = require('./middleware/errorHandler');
+const requestLogger = require('./middleware/requestLogger');
 
 const app = express();
 
 app.disable('x-powered-by');
+app.use(requestLogger);
 
 app.use(helmet());
 
@@ -28,12 +30,14 @@ app.post('/api/auth/reset-password', createLoginLimiter());
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
-app.get('/health', (req, res) =>
-  res.json({
-    status: 'ok',
-    db: mongoose.connection.readyState === 1 ? 'up' : 'down',
-  })
-);
+app.get('/health', (req, res) => {
+  const databaseUp = mongoose.connection.readyState === 1;
+  res.status(databaseUp ? 200 : 503).json({
+    status: databaseUp ? 'ok' : 'degraded',
+    db: databaseUp ? 'up' : 'down',
+    uptimeSeconds: Math.floor(process.uptime()),
+  });
+});
 
 app.use('/api/auth', require('./modules/auth/auth.routes'));
 app.use('/api/categories', require('./modules/categories/categories.routes'));
