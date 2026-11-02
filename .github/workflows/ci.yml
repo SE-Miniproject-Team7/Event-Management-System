@@ -52,7 +52,7 @@ jobs:
           echo "MongoDB replica set did not become primary" >&2
           exit 1
       - name: Verify event audit and notification transactions
-        run: node --test tests/audit.integration.cjs tests/notifications.integration.cjs
+        run: node --test tests/audit.integration.cjs tests/notifications.integration.cjs tests/reminder.scheduler.integration.cjs
       - name: Measure service coverage
         run: npm run test:coverage
       - name: Upload service coverage report
