@@ -1,0 +1,25 @@
+{
+  "backend": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "frontend": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "historyScan": {
+    "tool": "gitleaks 8.30.1",
+    "commits": 183,
+    "findings": 0,
+    "scope": "all fetched local refs",
+    "redactionPercent": 100
+  }
+}

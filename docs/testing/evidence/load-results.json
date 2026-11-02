@@ -1,0 +1,403 @@
+{
+  "date": "2026-11-02",
+  "tool": "Node HTTP workload (JMeter substitution; not a JMeter report)",
+  "users": 100,
+  "thinkTimeMs": 60500,
+  "phaseDurationMs": 300000,
+  "health": [
+    {
+      "phase": "search",
+      "elapsedMs": 10000,
+      "status": 200,
+      "ms": 2.0718999999990046
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 20008,
+      "status": 200,
+      "ms": 2.626399999997375
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 30009,
+      "status": 200,
+      "ms": 2.4299000000028173
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 40015,
+      "status": 200,
+      "ms": 5.270499999998719
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 50020,
+      "status": 200,
+      "ms": 1.4282000000021071
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 60031,
+      "status": 200,
+      "ms": 2.0899999999965075
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 70046,
+      "status": 200,
+      "ms": 2.098100000002887
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 80048,
+      "status": 200,
+      "ms": 1.9998999999952503
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 90058,
+      "status": 200,
+      "ms": 1.6183000000019092
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 100064,
+      "status": 200,
+      "ms": 3.1797999999980675
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 110064,
+      "status": 200,
+      "ms": 2.591099999990547
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 120075,
+      "status": 200,
+      "ms": 1.5846999999921536
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 130080,
+      "status": 200,
+      "ms": 1.672500000015134
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 140087,
+      "status": 200,
+      "ms": 2.5130000000062864
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 150092,
+      "status": 200,
+      "ms": 1.7007999999914318
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 160093,
+      "status": 200,
+      "ms": 1.7344999999913853
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 170101,
+      "status": 200,
+      "ms": 1.2999000000127126
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 180109,
+      "status": 200,
+      "ms": 1.3620999999984633
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 190118,
+      "status": 200,
+      "ms": 1.996500000008382
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 200125,
+      "status": 200,
+      "ms": 2.9771999999939
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 210135,
+      "status": 200,
+      "ms": 3.0555999999924097
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 220146,
+      "status": 200,
+      "ms": 2.785199999983888
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 230153,
+      "status": 200,
+      "ms": 2.5397999999986496
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 240154,
+      "status": 200,
+      "ms": 1.743400000006659
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 250156,
+      "status": 200,
+      "ms": 2.4355999999970663
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 260157,
+      "status": 200,
+      "ms": 1.7520999999833293
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 270168,
+      "status": 200,
+      "ms": 1.375
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 280178,
+      "status": 200,
+      "ms": 2.7092999999877065
+    },
+    {
+      "phase": "search",
+      "elapsedMs": 290190,
+      "status": 200,
+      "ms": 2.23689999995986
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 10010,
+      "status": 200,
+      "ms": 1.8879999999771826
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 20024,
+      "status": 200,
+      "ms": 1.8135999999940395
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 30034,
+      "status": 200,
+      "ms": 1.8037999999942258
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 40035,
+      "status": 200,
+      "ms": 2.7914999999920838
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 50048,
+      "status": 200,
+      "ms": 2.9588999999687076
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 60051,
+      "status": 200,
+      "ms": 1.3800999999511987
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 70061,
+      "status": 200,
+      "ms": 1.710800000000745
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 80063,
+      "status": 200,
+      "ms": 2.0904999999911524
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 90074,
+      "status": 200,
+      "ms": 2.60820000001695
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 100087,
+      "status": 200,
+      "ms": 2.121500000008382
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 110094,
+      "status": 200,
+      "ms": 3.6626999999862164
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 120104,
+      "status": 200,
+      "ms": 1.949300000036601
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 130115,
+      "status": 200,
+      "ms": 1.8222999999998137
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 140127,
+      "status": 200,
+      "ms": 2.0601000000024214
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 150135,
+      "status": 200,
+      "ms": 1.9633000000030734
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 160140,
+      "status": 200,
+      "ms": 2.400599999993574
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 170154,
+      "status": 200,
+      "ms": 2.642900000035297
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 180164,
+      "status": 200,
+      "ms": 2.1714999999967404
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 190174,
+      "status": 200,
+      "ms": 2.710300000035204
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 200178,
+      "status": 200,
+      "ms": 2.058100000023842
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 210193,
+      "status": 200,
+      "ms": 1.8720000000321306
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 220202,
+      "status": 200,
+      "ms": 1.6247000000439584
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 230202,
+      "status": 200,
+      "ms": 1.2876000000396743
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 240210,
+      "status": 200,
+      "ms": 1.9924999999348074
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 250222,
+      "status": 200,
+      "ms": 1.689699999988079
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 260228,
+      "status": 200,
+      "ms": 1.3220999999903142
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 270238,
+      "status": 200,
+      "ms": 2.16980000003241
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 280248,
+      "status": 200,
+      "ms": 1.9424000000581145
+    },
+    {
+      "phase": "registration",
+      "elapsedMs": 290255,
+      "status": 200,
+      "ms": 2.39359999995213
+    }
+  ],
+  "baseline": {
+    "requests": 30,
+    "p95Ms": 12.373199999999997,
+    "meanMs": 9.85432,
+    "errors": 0,
+    "errorPercent": 0,
+    "statuses": {
+      "200": 30
+    }
+  },
+  "search": {
+    "requests": 500,
+    "p95Ms": 267.22230000000127,
+    "meanMs": 189.50469319999925,
+    "errors": 0,
+    "errorPercent": 0,
+    "statuses": {
+      "200": 500
+    },
+    "elapsedMs": 300006,
+    "rounds": 5,
+    "degradationPercent": 2059.6862573950257,
+    "meetsOriginalThresholds": false
+  },
+  "registration": {
+    "requests": 500,
+    "p95Ms": 404.59560000000056,
+    "meanMs": 360.93216319999914,
+    "errors": 0,
+    "errorPercent": 0,
+    "statuses": {
+      "201": 500
+    },
+    "elapsedMs": 300012,
+    "rounds": 5,
+    "meetsOriginalThresholds": true
+  },
+  "healthSummary": {
+    "samples": 58,
+    "successful": 58,
+    "availabilityPercent": 100
+  },
+  "dataset": {
+    "users": 1000,
+    "events": 5000
+  }
+}

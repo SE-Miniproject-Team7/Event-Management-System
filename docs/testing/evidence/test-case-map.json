@@ -1,0 +1,412 @@
+[
+  {
+    "id": "TC-AUTH-01",
+    "requirements": [
+      "EMS-F-001"
+    ],
+    "status": "PARTIAL",
+    "evidence": "accountRegistration.test.js; security.integration.cjs",
+    "update": "Use a fresh attendee email and the current 3\u201360 name / 8\u201364 password rules. Verify the three-second target separately; latest unit counts alone do not establish it."
+  },
+  {
+    "id": "TC-AUTH-02",
+    "requirements": [
+      "EMS-F-001"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "accountRegistration.test.js",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-AUTH-03",
+    "requirements": [
+      "EMS-F-002"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "auth.test.js; security.integration.cjs",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-AUTH-04",
+    "requirements": [
+      "EMS-F-003",
+      "EMS-SEC-005"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "lockout.test.js; lockout.integration.cjs",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-AUTH-05",
+    "requirements": [
+      "EMS-F-004",
+      "EMS-SEC-003"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "events.test.js; adminUsers.test.js; checkin.integration.cjs",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-AUTH-06",
+    "requirements": [
+      "EMS-F-005"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "reset.integration.cjs; reset.test.js; PASSWORD_RESET.md",
+    "update": "Use /forgot-password and /reset-password with a fragment token. Use controlled time/database expiry instead of waiting 31 real minutes. Add supersession, concurrent reuse, inactive-account and queue-failure checks. Historical local SMTP/Chrome evidence is in PASSWORD_RESET.md."
+  },
+  {
+    "id": "TC-AUTH-07",
+    "requirements": [
+      "EMS-F-006"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "users.test.js; fresh localhost profile API check",
+    "update": "The merged implementation is PUT /api/users/me. Validate 3\u201360 trimmed name and exactly 10 phone digits. Profile API currently returns a validation message rather than a structured phone field entry; record this presentation difference. No profile-edit screen was added by #95."
+  },
+  {
+    "id": "TC-EVT-01",
+    "requirements": [
+      "EMS-F-007",
+      "EMS-F-009"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "events.test.js",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-EVT-02",
+    "requirements": [
+      "EMS-F-007",
+      "EMS-F-008"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "events.test.js",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-EVT-03",
+    "requirements": [
+      "EMS-F-010"
+    ],
+    "status": "PARTIAL",
+    "evidence": "audit.integration.cjs; notification.worker.test.js",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-EVT-04",
+    "requirements": [
+      "EMS-F-011",
+      "EMS-SEC-003"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "events.test.js; audit.integration.cjs",
+    "update": "Add null-date, audit-failure and notification-failure rollback checks. Published edits return to Pending Approval; retain this documented behaviour."
+  },
+  {
+    "id": "TC-EVT-05",
+    "requirements": [
+      "EMS-F-012",
+      "EMS-F-024"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "audit.integration.cjs; notification.worker.test.js",
+    "update": "Email jobs are committed transactionally and delivered asynchronously. Verify recipient list and queue timing separately from external-mailbox arrival."
+  },
+  {
+    "id": "TC-SRC-01",
+    "requirements": [
+      "EMS-F-013",
+      "EMS-F-014"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "events.test.js; EventsPage.test.jsx",
+    "update": "Date-only search boundaries use IST. Test combined filters, zero remaining seats, pagination and filter-reset behaviour."
+  },
+  {
+    "id": "TC-SRC-02",
+    "requirements": [
+      "EMS-F-015"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "events.test.js; EventDetailsPage.test.jsx; fresh Chrome detail",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-REG-01",
+    "requirements": [
+      "EMS-F-016"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "registrations.test.js; fresh Chrome registration/QR",
+    "update": "QR payload is regCode. Confirm saved access on My Registrations and use it with the organizer reader."
+  },
+  {
+    "id": "TC-REG-02",
+    "requirements": [
+      "EMS-F-016",
+      "EMS-F-017"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "registrations.test.js",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-REG-03",
+    "requirements": [
+      "EMS-F-018"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "registrations.test.js; EventDetailsPage.test.jsx",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-REG-04",
+    "requirements": [
+      "EMS-F-018",
+      "EMS-F-019"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "registrations.concurrent.integration.cjs; notification.worker.test.js",
+    "update": "Cancellation is permitted only before event start. Verify FIFO order, compaction after both cancellation types, unchanged occupied seats after promotion and transactional promotion-email queueing."
+  },
+  {
+    "id": "TC-REG-05",
+    "requirements": [
+      "EMS-F-020"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "registrations.test.js; MyRegistrationsPage.test.jsx; fresh Chrome list",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-REG-06",
+    "requirements": [
+      "EMS-F-021"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "registrations.concurrent.integration.cjs",
+    "update": "Extend the original 60-user case to assert unique waitlist positions 1\u201350 and FIFO compaction. Use a replica-set test database."
+  },
+  {
+    "id": "TC-NTF-01",
+    "requirements": [
+      "EMS-F-022"
+    ],
+    "status": "PARTIAL",
+    "evidence": "notifications.integration.cjs; fresh browser DB queue observation",
+    "update": "A queue record is different from SMTP submission. Observe queueing and actual transport submission within 60 seconds; no new external Mailtrap check is claimed by this report."
+  },
+  {
+    "id": "TC-NTF-02",
+    "requirements": [
+      "EMS-F-023"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "reminder.scheduler.integration.cjs; notification.worker.test.js",
+    "update": "Use controlled scheduler time. Include repeated/concurrent runs, restart catch-up within \u00b115 minutes, current recipient eligibility and suppression of stale/out-of-window jobs."
+  },
+  {
+    "id": "TC-NTF-03",
+    "requirements": [
+      "EMS-F-025"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "notification.worker.test.js",
+    "update": "Four attempts means one initial attempt plus three retries. Verify the nextAttemptAt interval and delivery-log entries, not just repeated immediate mock calls."
+  },
+  {
+    "id": "TC-CHK-01",
+    "requirements": [
+      "EMS-F-026"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "checkin.integration.cjs; CheckInPage.test.jsx",
+    "update": "The inclusive server check-in window is start minus one hour through end. Test the exact boundaries plus the original early/late examples. Camera permission/device coverage is separate from code/QR unit tests."
+  },
+  {
+    "id": "TC-CHK-02",
+    "requirements": [
+      "EMS-F-027"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "checkin.integration.cjs",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-RPT-01",
+    "requirements": [
+      "EMS-F-028",
+      "EMS-F-029"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "eventReports.test.js; fresh Chrome 75% report/CSV fixture",
+    "update": "For the original fixture, 6 Checked-in + 2 still Confirmed = 8 occupied bookings, 3 Waitlisted and 2 Cancelled; attendance is 6/8=75%. UI separates still-Confirmed from Checked-in. CSV includes the five required fields plus additional event/summary fields. Record the display interpretation and extra columns as explicit implementation differences."
+  },
+  {
+    "id": "TC-RPT-02",
+    "requirements": [
+      "EMS-F-030"
+    ],
+    "status": "PARTIAL",
+    "evidence": "adminSummary.integration.cjs; AdminSummaryPage.test.jsx; fresh Chrome summary route",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-ADM-01",
+    "requirements": [
+      "EMS-F-031"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "adminUsers.integration.cjs; AdminUsersPage.test.jsx",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-ADM-02",
+    "requirements": [
+      "EMS-F-032"
+    ],
+    "status": "PARTIAL",
+    "evidence": "AdminCategoriesPage.test.jsx; fresh Chrome category create/disable",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-PERF-01",
+    "requirements": [
+      "EMS-NF-001",
+      "EMS-NF-008"
+    ],
+    "status": "LOAD CHECK",
+    "evidence": "timed localhost search workload",
+    "update": "Keep the original 1,000-user/5,000-event, 100-user, five-minute thresholds. The local executable uses Node HTTP instead of JMeter, with a recorded 60.5-second per-user think time to respect the unchanged 100/minute/IP limiter. This tool/workload substitution is disclosed, not silently treated as original JMeter execution."
+  },
+  {
+    "id": "TC-PERF-02",
+    "requirements": [
+      "EMS-NF-002"
+    ],
+    "status": "LOAD CHECK",
+    "evidence": "timed localhost registration workload",
+    "update": "Keep p95<=3 seconds and error<1% with 100 users for five minutes. Use distinct event/attendee registrations, synthetic JWTs and the same declared think time. Do not count a 60-request correctness test as a five-minute load test."
+  },
+  {
+    "id": "TC-AVL-01",
+    "requirements": [
+      "EMS-NF-003",
+      "EMS-NF-006"
+    ],
+    "status": "PARTIAL",
+    "evidence": "health.test.js; databaseBackup.integration.cjs; timed /health sampling",
+    "update": "Report /health availability for the exact observed local duration only. This does not establish production availability. Backup restore checks counts and sample BSON data; Unix mode tests do not prove Windows NTFS ACLs."
+  },
+  {
+    "id": "TC-USB-01",
+    "requirements": [
+      "EMS-NF-004"
+    ],
+    "status": "PENDING HUMAN TEST",
+    "evidence": "five first-time human participants required",
+    "update": "Record five real first-time participants using USABILITY_RECORD.md. AI/browser automation is not a substitute for human usability results."
+  },
+  {
+    "id": "TC-CMP-01",
+    "requirements": [
+      "EMS-NF-005",
+      "EMS-NF-009"
+    ],
+    "status": "PARTIAL",
+    "evidence": "fresh Chrome desktop/mobile smoke; Edge/Firefox/Lighthouse pending",
+    "update": "Chrome at 360/1920 on three pages is only partial evidence. Retain Firefox/Edge and Lighthouse>=90 on four pages as pending until actually measured."
+  },
+  {
+    "id": "TC-MNT-01",
+    "requirements": [
+      "EMS-NF-007"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "Jest coverage summary; frontend ESLint",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-TZ-01",
+    "requirements": [
+      "EMS-NF-010"
+    ],
+    "status": "PARTIAL",
+    "evidence": "dateTime.test.js; backend IST date-boundary cases",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-SAF-01",
+    "requirements": [
+      "EMS-SAF-001",
+      "EMS-SAF-002"
+    ],
+    "status": "PARTIAL",
+    "evidence": "fresh Chrome registration confirmation dialog; adminUsers.test.js",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-SEC-01",
+    "requirements": [
+      "EMS-SEC-001"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "security.integration.cjs; accountRegistration.test.js",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-SEC-02",
+    "requirements": [
+      "EMS-SEC-002"
+    ],
+    "status": "NOT EXECUTED",
+    "evidence": "not executed: no deployed HTTPS target",
+    "update": "Localhost HTTP evaluation means this deployed TLS/redirect case was NOT EXECUTED. Retain it in the plan; no instructor waiver or passing result is claimed."
+  },
+  {
+    "id": "TC-SEC-03",
+    "requirements": [
+      "EMS-SEC-004"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "security.integration.cjs; security.test.js; historical browser XSS",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-SEC-04",
+    "requirements": [
+      "EMS-SEC-005"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "rateLimit.test.js",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-SEC-05",
+    "requirements": [
+      "EMS-SEC-006"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "audit.integration.cjs; audit.model.test.js",
+    "update": "Retain the original steps and acceptance criteria. Use the current localhost routes and record any unexecuted portions separately."
+  },
+  {
+    "id": "TC-SEC-06",
+    "requirements": [
+      "EMS-SEC-007"
+    ],
+    "status": "PARTIAL",
+    "evidence": "security.integration.cjs; security.test.js",
+    "update": "Local development cookies intentionally omit Secure for HTTP. Production-mode API tests inspect Secure/HttpOnly/SameSite flags; actual HTTPS browser behaviour remains unexecuted."
+  },
+  {
+    "id": "TC-SEC-07",
+    "requirements": [
+      "EMS-SEC-008"
+    ],
+    "status": "AUTOMATED EVIDENCE",
+    "evidence": "fresh production audits and redacted Gitleaks history scan",
+    "update": "Use fully redacted history scans and production-only npm audits. Development dependency findings are outside the production audit result, not silently counted as clean."
+  }
+]

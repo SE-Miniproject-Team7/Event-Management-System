@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-02",
+  "scope": "localhost real Chrome, real API and isolated MongoDB",
+  "checks": [
+    {
+      "name": "Real attendee login, event detail, registration and saved registration QR",
+      "status": "pass"
+    },
+    {
+      "name": "Registration confirmation queued in real database",
+      "status": "pass"
+    },
+    {
+      "name": "Registration cancellation requires confirmation and updates stored state",
+      "status": "pass"
+    },
+    {
+      "name": "Real profile API saves validated fields and ignores attempted role escalation",
+      "status": "pass"
+    },
+    {
+      "name": "Report 75% fixture, same-event refresh and downloaded CSV with 13 registration rows",
+      "status": "pass"
+    },
+    {
+      "name": "Admin summary and user-management routes retain authenticated access",
+      "status": "pass"
+    },
+    {
+      "name": "Admin category create/disable and exclusion from public category options",
+      "status": "pass"
+    }
+  ],
+  "browserVersion": "156.0.8078.74",
+  "responsive": [
+    {
+      "path": "/registrations/me",
+      "width": 360,
+      "noHorizontalOverflow": true
+    },
+    {
+      "path": "/registrations/me",
+      "width": 1920,
+      "noHorizontalOverflow": true
+    },
+    {
+      "path": "/organizer/reports",
+      "width": 360,
+      "noHorizontalOverflow": true
+    },
+    {
+      "path": "/organizer/reports",
+      "width": 1920,
+      "noHorizontalOverflow": true
+    },
+    {
+      "path": "/admin/categories",
+      "width": 360,
+      "noHorizontalOverflow": true
+    },
+    {
+      "path": "/admin/categories",
+      "width": 1920,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "status": "completed"
+}
