@@ -1,3 +1,47 @@
+# Current verification — 2 November 2026 (issue #41)
+
+Base: `7fb27b1a6fa207d22bd315ab370009803905d9ff`, plus the local backup-log sanitization fix and
+platform-aware backup test. Refs #41; final acceptance remains incomplete.
+
+- 322 backend Jest tests passed; the focused backup error-redaction regression
+  also passed. Raw database-maintenance exception messages are no longer logged.
+- Combined real-MongoDB run: 46/47 passed. The sole failure was the backup test's
+  POSIX mode assertion on Windows. It now applies only on Unix; both backup tests
+  passed on rerun. The other 45 database tests passed in the combined run.
+- 37 frontend tests, lint and production build passed.
+- Backend and frontend production audits both report zero vulnerabilities.
+- Gitleaks 8.30.1 scanned all fetched refs (172 commits), with zero findings.
+  This history scan does not include uncommitted work or unreachable history.
+
+The database checks include merged event edits/lifecycle queue rollback, reminder
+timing/idempotency, 60 concurrent registrations with unique waitlist positions,
+FIFO cancellation, password reset, check-in, admin authorization and sanitization.
+The password-reset local SMTP/Chrome check is recorded in PASSWORD_RESET.md.
+No fresh external SMTP or deployed-browser verification is claimed here.
+
+## What still prevents closure
+
+1. The user confirmed on 2 November that EMS is not deployed. TC-SEC-02 requires
+   actual deployed redirects and TLS 1.2+; the test plan also requires deployed
+   ZAP scanning. Local headers and tests cannot establish these results.
+2. Profile #12 and remaining UI work (#36–#38, including PR #92) remain open.
+   Verify their final implementations when integrated, reusing the existing
+   suites and adding tests only for uncovered security behaviour.
+3. Verify production cookies in a browser over actual HTTPS. Configure proxy
+   trust for the real hosting topology and verify per-client rate limiting there;
+   do not enable unrestricted trust proxy as a substitute.
+
+Windows backup ACLs are not proved by mode 0600; see OPERATIONS.md. All database
+fixtures used dedicated ems_test_* namespaces, not development/demo data.
+Machine-readable results: security/final-local-evidence.json.
+
+---
+
+## Historical report — 31 October 2026
+
+The report below records the earlier scope and counts; its pending-feature list
+is historical. Use the current section above for project status.
+
 # Security pass — issue #41
 
 Review date: 31 October 2026 (IST). Base: `05e714d4e23a870adaf1c3370e6c4c4db8adf070`

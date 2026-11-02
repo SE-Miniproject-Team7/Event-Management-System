@@ -1,0 +1,33 @@
+{
+  "reviewDateIST": "2026-11-02",
+  "baseCommit": "7fb27b1a6fa207d22bd315ab370009803905d9ff",
+  "status": "merged-local-checks-passed-final-ui-profile-and-deployment-pending",
+  "backendJestTests": 322,
+  "focusedBackupRedactionTests": 1,
+  "mongoIntegrationTests": 47,
+  "integrationNote": "Combined run passed 46/47; Windows-only POSIX assertion fixed, then both backup tests passed on rerun. Other 45 tests passed in combined run.",
+  "frontendTests": 37,
+  "frontendLint": "pass",
+  "frontendBuild": "pass",
+  "productionAudit": {
+    "backendVulnerabilities": 0,
+    "frontendVulnerabilities": 0
+  },
+  "historySecretScan": {
+    "tool": "gitleaks 8.30.1",
+    "commits": 172,
+    "refs": "all fetched local refs",
+    "findings": 0,
+    "exitCode": 0,
+    "redactionPercent": 100
+  },
+  "notVerified": [
+    "deployed HTTP-to-HTTPS redirect",
+    "TLS version enforcement",
+    "production browser cookies over HTTPS",
+    "deployed OWASP ZAP baseline",
+    "unmerged profile/admin/report UI functionality",
+    "Windows backup NTFS ACL"
+  ],
+  "historicalBrowserEvidence": "See PASSWORD_RESET.md for the 1 November local SMTP/Chrome flow. Earlier XSS browser check remains historical evidence, not a fresh check of unmerged UI."
+}
