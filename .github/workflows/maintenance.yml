@@ -34,7 +34,7 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
-      - run: npm test -- --runInBand tests/health.test.js
+      - run: npm test -- --runInBand tests/health.test.js tests/requestLogger.test.js
       - name: Start disposable MongoDB for backup and restore verification
         run: |
           docker run -d --rm --name ems-backup-mongo -p 27017:27017 mongo:7

@@ -8,8 +8,10 @@ Poll `GET /health`. A healthy application and MongoDB connection return HTTP 200
 Use the HTTP status for alerting; a live application with an unavailable database is not
 reported as healthy.
 
-The endpoint check in CI verifies both database-ready states. The 99% availability target
-requires monitoring a deployed environment over the agreed observation period.
+The endpoint check in CI verifies both database-ready states. The SRS target is 99% availability over a rolling 30-day measurement period, excluding
+announced maintenance. CI health checks verify response behavior only; they do not measure
+production availability. This target remains unverified until deployment monitoring has
+collected a complete measurement period.
 
 ## Structured application logs
 

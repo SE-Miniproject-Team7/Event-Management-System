@@ -8,11 +8,13 @@
   },
   "scripts": {
     "test": "jest --runInBand",
-    "test:integration": "node --test tests/lockout.integration.cjs tests/adminUsers.integration.cjs tests/adminSummary.integration.cjs tests/audit.integration.cjs tests/checkin.integration.cjs tests/security.integration.cjs",
+    "test:coverage": "jest --runInBand --coverage --coverageDirectory=coverage --coverageReporters=text-summary --coverageReporters=lcov --collectCoverageFrom=src/modules/**/*.js",
+    "test:integration": "node --require dotenv/config --test tests/lockout.integration.cjs tests/adminUsers.integration.cjs tests/adminSummary.integration.cjs tests/audit.integration.cjs tests/checkin.integration.cjs tests/security.integration.cjs tests/notifications.integration.cjs",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/seed.js",
     "test:security": "jest --runInBand tests/security.test.js tests/accountRegistration.test.js tests/auth.test.js tests/rateLimit.test.js tests/adminUsers.test.js tests/audit.model.test.js tests/audit.service.test.js tests/checkin.test.js tests/events.test.js",
+    "test:reset": "node --test tests/reset.integration.cjs",
     "backup:create": "node scripts/databaseBackup.js backup",
     "backup:restore": "node scripts/databaseBackup.js restore"
   },
@@ -30,6 +32,8 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.4",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^10.3.1",
     "bson": "^7.3.3"
   },
   "devDependencies": {

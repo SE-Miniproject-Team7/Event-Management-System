@@ -79,3 +79,11 @@ Unexpected server errors now expose/log only safe metadata; malformed/oversized
 JSON gets a sanitized 400/413. Session algorithms/ID shapes are constrained and
 rate limiting precedes body parsing. Full structured request logging and CI
 integration remain with the owners of #25 and #68.
+
+
+## Password reset (#11)
+
+The reset bearer token is carried in a URL fragment, then submitted in the reset
+POST body, to avoid HTTP access-log exposure. See PASSWORD_RESET.md for queue
+configuration, session behaviour and verification limits. SAD endpoint/status
+contracts and the 30-minute single-use requirement are preserved.

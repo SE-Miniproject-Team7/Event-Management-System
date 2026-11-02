@@ -37,7 +37,10 @@ describe('Security regression pass (TC-SEC-01/03/06)', () => {
     expect(res.body).toEqual({ error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } });
     expect(consoleError).toHaveBeenCalledTimes(1);
     const log = JSON.parse(consoleError.mock.calls[0][0]);
-    expect(log).toEqual(expect.objectContaining({ level: 'error', event: 'request_failed', status: 500, code: 'INTERNAL_ERROR', requestId: null }));
+    expect(log).toEqual(expect.objectContaining({
+      level: 'error', event: 'request_failed', status: 500, code: 'INTERNAL_ERROR',
+      requestId: null,
+    }));
     expect(log.time).toEqual(expect.any(String));
     expect(JSON.stringify(consoleError.mock.calls)).not.toContain('private-');
   });

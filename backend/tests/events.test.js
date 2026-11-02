@@ -1,4 +1,5 @@
 jest.mock('../src/modules/audit/audit.service', () => ({ recordAudit: jest.fn(), recordCheckIn: jest.fn() }));
+jest.mock('../src/modules/notifications/notification.service', () => ({ enqueueNotification: jest.fn() }));
 process.env.JWT_SECRET = 'test-secret-for-events';
 
 const request = require('supertest');
@@ -22,6 +23,7 @@ const User = require('../src/models/User');
 const Category = require('../src/models/Category');
 const Event = require('../src/models/Event');
 const Registration = require('../src/models/Registration');
+const { enqueueNotification } = require('../src/modules/notifications/notification.service');
 const app = require('../src/app');
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -50,7 +52,9 @@ function validBody(over = {}) {
 
 function makeEvent(over = {}) {
   return {
-    _id: EVENT_ID, title: 'Hack Night', capacity: 50, seatsTaken: 12,
+    _id: EVENT_ID, title: 'Hack Night', description: 'Overnight hackathon', categoryId: CAT_ID,
+    venue: 'Hall A', capacity: 50, seatsTaken: 12, registrationDeadline: new Date(Date.now() + 9 * DAY),
+    endAt: new Date(Date.now() + 10 * DAY + 3 * 3600e3),
     organizerId: ORG_ID, status: 'Published', startAt: new Date(Date.now() + 10 * DAY),
     save: jest.fn().mockResolvedValue(undefined),
     toObject() { return { title: this.title, capacity: this.capacity, seatsTaken: this.seatsTaken }; },
@@ -243,10 +247,18 @@ describe('organizer cancels event (TC-EVT-04, TC-EVT-05)', () => {
     jest.spyOn(mongoose, 'startSession').mockResolvedValue(session);
   });
 
-  test('owner cancels: event cancelled, registrations cancelled, seats reset', async () => {
+  test('owner cancels: event cancelled, registrations cancelled, seats reset and attendee emails queued', async () => {
     const { cookie } = loginAs('Organizer');
     const ev = makeEvent({ seatsTaken: 3 });
     Event.findById.mockResolvedValue(ev);
+    Registration.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        session: jest.fn().mockResolvedValue([{
+          _id: 'registration-1',
+          userId: { name: 'Test Attendee', email: 'attendee@example.com' },
+        }]),
+      }),
+    });
     Registration.updateMany.mockResolvedValue({ modifiedCount: 5 });
 
     const res = await cancel(cookie);
@@ -261,6 +273,15 @@ describe('organizer cancels event (TC-EVT-04, TC-EVT-05)', () => {
       { session }
     );
     expect(ev.save).toHaveBeenCalledWith({ session });
+    expect(enqueueNotification).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'EVENT_CANCELLATION',
+      recipient: 'attendee@example.com',
+      payload: expect.objectContaining({
+        idempotencyKey: `event-cancellation:${ev._id}:registration-1`,
+        attendeeName: 'Test Attendee',
+      }),
+      session,
+    }));
     expect(session.endSession).toHaveBeenCalled();
   });
 
@@ -305,6 +326,129 @@ describe('organizer cancels event (TC-EVT-04, TC-EVT-05)', () => {
   test('Attendee cannot cancel events (403)', async () => {
     const { cookie } = loginAs('Attendee', ATT_ID);
     expect((await cancel(cookie)).status).toBe(403);
+  });
+});
+
+describe('organizer edits own event (EMS-F-011)', () => {
+  const edit = (cookie, body, id = EVENT_ID) =>
+    request(app).patch(`/api/events/${id}`).set('Cookie', cookie).send(body);
+
+  beforeEach(() => {
+    Category.findOne.mockResolvedValue({ _id: CAT_ID, name: 'Workshop', active: true });
+    Registration.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        session: jest.fn().mockResolvedValue([]),
+      }),
+    });
+  });
+
+  test('owner can update event fields, notify attendees and return published events to approval', async () => {
+    const { cookie } = loginAs('Organizer');
+    const event = makeEvent({ status: 'Published' });
+    Event.findById.mockResolvedValue(event);
+    Registration.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        session: jest.fn().mockResolvedValue([{
+          _id: 'registration-update-1',
+          userId: { name: 'Test Attendee', email: 'attendee@example.com' },
+        }]),
+      }),
+    });
+    const res = await edit(cookie, { title: '  Updated Hack Night  ', venue: '  Hall B  ' });
+    expect(res.status).toBe(200);
+    expect(event.title).toBe('Updated Hack Night');
+    expect(event.venue).toBe('Hall B');
+    expect(event.status).toBe('Pending Approval');
+    expect(event.save).toHaveBeenCalledWith({ session: undefined });
+    expect(require('../src/modules/audit/audit.service').recordAudit).toHaveBeenCalledWith(
+      expect.anything(), 'EVENT_UPDATED', expect.objectContaining({ targetId: EVENT_ID, targetType: 'Event' })
+    );
+    expect(enqueueNotification).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'EVENT_UPDATED',
+      recipient: 'attendee@example.com',
+      payload: expect.objectContaining({
+        idempotencyKey: expect.stringContaining(`event-updated:${EVENT_ID}`),
+        attendeeName: 'Test Attendee',
+        eventTitle: 'Updated Hack Night',
+        venue: 'Hall B',
+        awaitingApproval: true,
+      }),
+      session: undefined,
+    }));
+  });
+
+  test('another organizer cannot edit the event', async () => {
+    const { cookie } = loginAs('Organizer', ORG2_ID);
+    const event = makeEvent();
+    Event.findById.mockResolvedValue(event);
+    const res = await edit(cookie, { title: 'Different title' });
+    expect(res.status).toBe(403);
+    expect(event.save).not.toHaveBeenCalled();
+  });
+
+  test('invalid fields are rejected without saving', async () => {
+    const { cookie } = loginAs('Organizer');
+    const event = makeEvent();
+    Event.findById.mockResolvedValue(event);
+    const res = await edit(cookie, { capacity: 2 });
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(event.save).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['startAt', { startAt: null }],
+    ['startAt', { startAt: 123 }],
+    ['endAt', { endAt: false }],
+    ['registrationDeadline', { registrationDeadline: null }],
+    ['registrationDeadline', { registrationDeadline: {} }],
+  ])('rejects invalid edit date input for %s', async (field, body) => {
+    const { cookie } = loginAs('Organizer');
+    const event = makeEvent();
+    Event.findById.mockResolvedValue(event);
+
+    const res = await edit(cookie, body);
+
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error.fields.map((item) => item.field)).toContain(field);
+    expect(event.save).not.toHaveBeenCalled();
+  });
+
+  test('rejects a submitted start date in the past', async () => {
+    const { cookie } = loginAs('Organizer');
+    const event = makeEvent();
+    Event.findById.mockResolvedValue(event);
+
+    const res = await edit(cookie, { startAt: iso(-1), endAt: iso(1), registrationDeadline: iso(-2) });
+
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error.fields.map((field) => field.field)).toContain('startAt');
+    expect(event.save).not.toHaveBeenCalled();
+  });
+
+  test('client cannot change status or organizer ownership', async () => {
+    const { cookie } = loginAs('Organizer');
+    const event = makeEvent();
+    Event.findById.mockResolvedValue(event);
+    const res = await edit(cookie, { status: 'Published', organizerId: ORG2_ID.toString() });
+    expect(res.status).toBe(422);
+    expect(event.save).not.toHaveBeenCalled();
+  });
+
+  test('cancelled events cannot be edited', async () => {
+    const { cookie } = loginAs('Organizer');
+    Event.findById.mockResolvedValue(makeEvent({ status: 'Cancelled' }));
+    const res = await edit(cookie, { title: 'Changed title' });
+    expect(res.status).toBe(409);
+  });
+
+  test('invalid id and missing event return 404', async () => {
+    const { cookie } = loginAs('Organizer');
+    expect((await edit(cookie, { title: 'Changed title' }, 'bad-id')).status).toBe(404);
+    Event.findById.mockResolvedValue(null);
+    expect((await edit(cookie, { title: 'Changed title' })).status).toBe(404);
   });
 });
 

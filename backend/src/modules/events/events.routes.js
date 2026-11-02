@@ -8,6 +8,7 @@ const { authenticate, requireRole } = require('../../middleware/auth');
 const asyncHandler = require('../../utils/asyncHandler');
 const AppError = require('../../utils/AppError');
 const { recordAudit } = require('../audit/audit.service');
+const { enqueueNotification } = require('../notifications/notification.service');
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const withRemaining = (e) => ({ ...e.toObject(), remainingSeats: e.capacity - e.seatsTaken });
@@ -126,6 +127,95 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 
 
+router.patch('/:id', authenticate, requireRole('Organizer'), asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) throw notFound();
+
+  const body = req.body || {};
+  const allowed = ['title', 'description', 'categoryId', 'venue', 'startAt', 'endAt', 'registrationDeadline', 'capacity'];
+  const supplied = Object.keys(body);
+  if (!supplied.length || supplied.some((key) => !allowed.includes(key))) {
+    throw new AppError(422, 'VALIDATION_ERROR', 'Provide only editable event fields', [
+      { field: 'body', message: 'At least one editable field is required; status and ownership cannot be changed' },
+    ]);
+  }
+
+  const updated = await mongoose.connection.transaction(async (session) => {
+    const event = await Event.findById(req.params.id, null, { session });
+    if (!event) throw notFound();
+    if (!event.organizerId.equals(req.user._id)) throw new AppError(403, 'FORBIDDEN', 'Not your event');
+    if (['Cancelled', 'Rejected'].includes(event.status) || event.startAt <= new Date()) {
+      throw new AppError(409, 'EDIT_NOT_ALLOWED', 'This event can no longer be edited');
+    }
+
+    const next = {
+      title: body.title === undefined ? event.title : body.title,
+      description: body.description === undefined ? event.description : body.description,
+      categoryId: body.categoryId === undefined ? String(event.categoryId) : body.categoryId,
+      venue: body.venue === undefined ? event.venue : body.venue,
+      startAt: body.startAt === undefined ? event.startAt : parseDate(body.startAt),
+      endAt: body.endAt === undefined ? event.endAt : parseDate(body.endAt),
+      registrationDeadline: body.registrationDeadline === undefined ? event.registrationDeadline : parseDate(body.registrationDeadline),
+      capacity: body.capacity === undefined ? event.capacity : body.capacity,
+    };
+    const fields = [];
+    if (typeof next.title !== 'string' || next.title.trim().length < 3 || next.title.trim().length > 100) fields.push({ field: 'title', message: 'Title must be 3 to 100 characters' });
+    if (typeof next.description !== 'string' || !next.description.trim() || next.description.trim().length > 2000) fields.push({ field: 'description', message: 'Description is required (max 2000 characters)' });
+    if (typeof next.venue !== 'string' || !next.venue.trim() || next.venue.trim().length > 100) fields.push({ field: 'venue', message: 'Venue is required (max 100 characters)' });
+    if (isNaN(next.startAt) || next.startAt <= new Date()) fields.push({ field: 'startAt', message: 'Start date must be a valid future date' });
+    if (isNaN(next.endAt) || next.endAt <= next.startAt) fields.push({ field: 'endAt', message: 'End date must be valid and after start' });
+    if (isNaN(next.registrationDeadline) || next.registrationDeadline > next.startAt) fields.push({ field: 'registrationDeadline', message: 'Deadline must be a valid date on or before the start' });
+    if (!Number.isInteger(next.capacity) || next.capacity < 1 || next.capacity > 10000 || next.capacity < event.seatsTaken) {
+      fields.push({ field: 'capacity', message: 'Capacity must be 1 to 10000 and cannot be below current registrations' });
+    }
+    if (typeof next.categoryId !== 'string' || !mongoose.isValidObjectId(next.categoryId) ||
+        !(await Category.findOne({ _id: next.categoryId, active: true }))) {
+      fields.push({ field: 'categoryId', message: 'Choose a valid category' });
+    }
+    if (fields.length) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid event data', fields);
+
+    const wasPublished = event.status === 'Published';
+    const activeRegistrations = wasPublished
+      ? await Registration.find({
+          eventId: event._id,
+          status: { $in: ['Confirmed', 'Waitlisted', 'Checked-in'] },
+        }).populate('userId', 'name email').session(session)
+      : [];
+
+    event.title = next.title.trim();
+    event.description = next.description.trim();
+    event.categoryId = next.categoryId;
+    event.venue = next.venue.trim();
+    event.startAt = next.startAt;
+    event.endAt = next.endAt;
+    event.registrationDeadline = next.registrationDeadline;
+    event.capacity = next.capacity;
+    if (wasPublished) event.status = 'Pending Approval';
+    await event.save({ session });
+    await recordAudit(req, 'EVENT_UPDATED', { targetId: event._id, targetType: 'Event', session });
+
+    for (const registration of activeRegistrations) {
+      const attendee = registration.userId;
+      if (!attendee?.email) continue;
+      await enqueueNotification({
+        type: 'EVENT_UPDATED',
+        recipient: attendee.email,
+        subject: `Event updated: ${event.title}`,
+        payload: {
+          idempotencyKey: `event-updated:${event._id}:${event.updatedAt?.getTime() || Date.now()}:${registration._id}`,
+          attendeeName: attendee.name || 'Attendee',
+          eventTitle: event.title,
+          venue: event.venue,
+          startAt: event.startAt?.toISOString(),
+          awaitingApproval: wasPublished,
+        },
+        session,
+      });
+    }
+    return event;
+  });
+  res.json({ event: updated });
+}));
+
 // Admin approves or rejects (EMS-F-010)
 router.patch('/:id/approval', authenticate, requireRole('Admin'), asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) throw notFound();
@@ -149,6 +239,28 @@ router.patch('/:id/approval', authenticate, requireRole('Admin'), asyncHandler(a
     await recordAudit(req, decision === 'approve' ? 'EVENT_APPROVED' : 'EVENT_REJECTED', {
       targetId: event._id, targetType: 'Event', session,
     });
+
+    const organizerQuery = User.findById(event.organizerId, 'name email');
+    const organizer = typeof organizerQuery.session === 'function'
+      ? await organizerQuery.session(session)
+      : await organizerQuery;
+    if (organizer?.email) {
+      const approved = decision === 'approve';
+      await enqueueNotification({
+        type: approved ? 'EVENT_APPROVED' : 'EVENT_REJECTED',
+        recipient: organizer.email,
+        subject: approved
+          ? `Event approved: ${event.title}`
+          : `Event decision: ${event.title}`,
+        payload: {
+          idempotencyKey: `event-decision:${event._id}:${event.status}:${event.updatedAt?.getTime() || Date.now()}`,
+          organizerName: organizer.name || 'Organizer',
+          eventTitle: event.title,
+          rejectionReason: approved ? undefined : event.rejectionReason,
+        },
+        session,
+      });
+    }
     return event;
   });
   res.json({ event });
@@ -171,6 +283,11 @@ router.post('/:id/cancel', authenticate, requireRole('Organizer'), asyncHandler(
         throw new AppError(409, 'CANCEL_NOT_ALLOWED', 'This event cannot be cancelled');
       }
 
+      const activeRegistrations = await Registration.find({
+        eventId: event._id,
+        status: { $in: ['Confirmed', 'Waitlisted', 'Checked-in'] },
+      }).populate('userId', 'name email').session(session);
+
       const result = await Registration.updateMany(
         { eventId: event._id, status: { $in: ['Confirmed', 'Waitlisted', 'Checked-in'] } },
         { $set: { status: 'Cancelled', waitlistPosition: null } },
@@ -182,12 +299,29 @@ router.post('/:id/cancel', authenticate, requireRole('Organizer'), asyncHandler(
       event.seatsTaken = 0;
       await event.save({ session });
       await recordAudit(req, 'EVENT_CANCELLED', { targetId: event._id, targetType: 'Event', session });
+
+      for (const registration of activeRegistrations) {
+        const attendee = registration.userId;
+        if (!attendee?.email) continue;
+        await enqueueNotification({
+          type: 'EVENT_CANCELLATION',
+          recipient: attendee.email,
+          subject: `Event cancelled: ${event.title}`,
+          payload: {
+            idempotencyKey: `event-cancellation:${event._id}:${registration._id}`,
+            attendeeName: attendee.name || 'Attendee',
+            eventTitle: event.title,
+            venue: event.venue,
+            startAt: event.startAt?.toISOString(),
+          },
+          session,
+        });
+      }
     });
   } finally {
     await session.endSession();
   }
 
-  // TODO (Sprint 2, EMS-F-024): queue a cancellation email for each affected attendee.
   res.json({ event, cancelledRegistrations });
 }));
 

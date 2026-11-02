@@ -1,9 +1,10 @@
 
-import { QRCodeSVG } from 'qrcode.react'
-import './CheckInPage.css'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { QRCodeSVG } from 'qrcode.react'
+import './CheckInPage.css'
 import api from '../services/api'
+import { formatIST } from '../utils/dateTime'
 
 function EventDetailsPage() {
   const { id } = useParams()
@@ -59,7 +60,14 @@ function EventDetailsPage() {
     try {
       const response = await api.post(`/events/${id}/registrations`)
       const result = response.data
-      if (result.regCode) setRegistrationPass({ eventId: id, regCode: result.regCode, status: result.status })
+
+      if (result.regCode) {
+        setRegistrationPass({
+          eventId: id,
+          regCode: result.regCode,
+          status: result.status,
+        })
+      }
 
       if (result.status === 'Waitlisted') {
         setRegistrationMessage(
@@ -131,7 +139,11 @@ function EventDetailsPage() {
       <h1>{event.title}</h1>
 
       <p>{event.description || 'No description available.'}</p>
-      <p><strong>Category:</strong> {categoryName || 'Not available'}</p>
+
+      <p>
+        <strong>Category:</strong> {categoryName || 'Not available'}
+      </p>
+
       <p>
         <strong>Organizer:</strong> {organizerName || 'Not available'}
       </p>
@@ -141,25 +153,11 @@ function EventDetailsPage() {
       </p>
 
       <p>
-        <strong>Starts:</strong>{' '}
-        {event.startAt
-          ? new Date(event.startAt).toLocaleString('en-IN', {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-              timeZone: 'Asia/Kolkata',
-            })
-          : 'To be announced'}
+        <strong>Starts:</strong> {formatIST(event.startAt)}
       </p>
 
       <p>
-        <strong>Ends:</strong>{' '}
-        {event.endAt
-          ? new Date(event.endAt).toLocaleString('en-IN', {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-              timeZone: 'Asia/Kolkata',
-            })
-          : 'To be announced'}
+        <strong>Ends:</strong> {formatIST(event.endAt)}
       </p>
 
       <p>
@@ -174,12 +172,27 @@ function EventDetailsPage() {
         {registering ? 'Registering...' : 'Register for Event'}
       </button>
 
-      {registrationPass?.eventId === id && <section className="registration-qr" aria-label="Registration QR code">
-        <h2>Your registration code</h2>
-        <QRCodeSVG value={registrationPass.regCode} size={192} marginSize={4} role="img" aria-label={`QR code for ${registrationPass.regCode}`} />
-        <code>{registrationPass.regCode}</code>
-        <p>Save this QR code for check-in. Only confirmed registrations can be checked in.</p>
-      </section>}
+      {registrationPass?.eventId === id && (
+        <section
+          className="registration-qr"
+          aria-label="Registration QR code"
+        >
+          <h2>Your registration code</h2>
+          <QRCodeSVG
+            value={registrationPass.regCode}
+            size={192}
+            marginSize={4}
+            role="img"
+            aria-label={`QR code for ${registrationPass.regCode}`}
+          />
+          <code>{registrationPass.regCode}</code>
+          <p>
+            Save this QR code for check-in. Only confirmed registrations
+            can be checked in.
+          </p>
+        </section>
+      )}
+
       {registrationMessage && (
         <p role="status">{registrationMessage}</p>
       )}

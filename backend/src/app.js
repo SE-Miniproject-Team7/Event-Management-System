@@ -24,6 +24,8 @@ app.use(cors({
 // Count API attempts before parsing, including malformed/oversized bodies.
 app.use('/api', createApiLimiter());
 app.post('/api/auth/login', createLoginLimiter());
+app.post('/api/auth/forgot-password', createLoginLimiter());
+app.post('/api/auth/reset-password', createLoginLimiter());
 
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
@@ -41,6 +43,7 @@ app.use('/api/auth', require('./modules/auth/auth.routes'));
 app.use('/api/categories', require('./modules/categories/categories.routes'));
 app.use('/api/events', require('./modules/events/events.routes'));
 app.use('/api/events', require('./modules/attendance/attendance.routes'));
+app.use('/api/events', require('./modules/reports/eventReport.routes'));
 app.use('/api', require('./modules/registrations/registrations.routes'));
 app.use('/api/admin', require('./modules/admin/admin.routes'));
 

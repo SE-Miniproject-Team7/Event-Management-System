@@ -117,7 +117,7 @@ async function main() {
 
 if (require.main === module) {
   main().catch((error) => {
-    console.error(JSON.stringify({ level: 'error', event: 'database_maintenance_failed', message: error.message }));
+    console.error(JSON.stringify({ level: 'error', event: 'database_maintenance_failed' }));
     process.exitCode = 1;
   });
 }

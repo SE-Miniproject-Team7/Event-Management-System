@@ -64,6 +64,24 @@ describe('event details API contract', () => {
     expect(await screen.findByText((_, element) => element.tagName === 'P' && element.textContent.includes('Seats remaining:') && element.textContent.includes('37'))).toBeTruthy()
   })
 
+  it('confirms waitlist position when registering for a full event', async () => {
+    api.get.mockResolvedValue(detail(0))
+    api.post.mockResolvedValue({
+      data: { status: 'Waitlisted', waitlistPosition: 1 },
+    })
+    renderDetails()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Register for Event' }))
+
+    expect(await screen.findByText('You have been added to the waitlist. Your position is 1.')).toBeTruthy()
+    expect(await screen.findByText((_, element) =>
+      element.tagName === 'P' &&
+      element.textContent.includes('Seats remaining:') &&
+      element.textContent.includes('0'),
+    )).toBeTruthy()
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2))
+  })
+
   it('shows the unavailable state when the public event endpoint returns 404', async () => {
     api.get.mockRejectedValue({ response: { status: 404, data: { error: { message: 'Event not found' } } } })
     renderDetails()

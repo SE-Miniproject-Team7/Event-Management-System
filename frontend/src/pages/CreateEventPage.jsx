@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
+import { parseISTDateTime } from '../utils/dateTime'
 
 const initialForm = {
   title: '',
@@ -21,6 +22,10 @@ function CreateEventPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  const now = new Date()
+  const offsetMs = now.getTimezoneOffset() * 60000
+  const minDateTime = new Date(now.getTime() - offsetMs).toISOString().slice(0, 16)
 
   useEffect(() => {
     let cancelled = false
@@ -65,9 +70,9 @@ function CreateEventPage() {
     setError('')
     setSuccess('')
 
-    const start = new Date(form.startAt)
-    const end = new Date(form.endAt)
-    const deadline = new Date(form.registrationDeadline)
+    const start = parseISTDateTime(form.startAt)
+    const end = parseISTDateTime(form.endAt)
+    const deadline = parseISTDateTime(form.registrationDeadline)
     const capacity = Number(form.capacity)
 
     if (form.title.trim().length < 3 || form.title.trim().length > 100) {
@@ -88,6 +93,7 @@ function CreateEventPage() {
       setError('Description must not exceed 2000 characters.')
       return
     }
+
     if (form.venue.trim().length > 100) {
       setError('Venue must not exceed 100 characters.')
       return
@@ -99,6 +105,18 @@ function CreateEventPage() {
       end <= start
     ) {
       setError('The event end date and time must be after the start.')
+      return
+    }
+
+    if (start <= new Date()) {
+      setError(
+        'The event start date and time must be in the future (the Explore page only lists upcoming events).',
+      )
+      return
+    }
+
+    if (deadline <= new Date()) {
+      setError('The registration deadline must be in the future.')
       return
     }
 
@@ -163,6 +181,7 @@ function CreateEventPage() {
         <p>
           Enter your event details and submit them for admin approval.
           Your event will not be published until it is approved.
+          All event times are entered in Indian Standard Time (IST).
         </p>
       </div>
 
@@ -242,23 +261,25 @@ function CreateEventPage() {
 
         <div className="management-form-grid">
           <label>
-            Start date and time
+            Start date and time (IST)
             <input
               type="datetime-local"
               name="startAt"
               value={form.startAt}
               onChange={handleChange}
+              min={minDateTime}
               required
             />
           </label>
 
           <label>
-            End date and time
+            End date and time (IST)
             <input
               type="datetime-local"
               name="endAt"
               value={form.endAt}
               onChange={handleChange}
+              min={form.startAt || minDateTime}
               required
             />
           </label>
@@ -266,12 +287,14 @@ function CreateEventPage() {
 
         <div className="management-form-grid">
           <label>
-            Registration deadline
+            Registration deadline (IST)
             <input
               type="datetime-local"
               name="registrationDeadline"
               value={form.registrationDeadline}
               onChange={handleChange}
+              min={minDateTime}
+              max={form.startAt || undefined}
               required
             />
           </label>

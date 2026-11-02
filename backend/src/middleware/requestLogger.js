@@ -10,7 +10,7 @@ module.exports = function requestLogger(req, res, next) {
     const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
     const route = req.route?.path
       ? `${req.baseUrl}${req.route.path}`
-      : req.path;
+      : 'UNMATCHED_ROUTE';
     const status = res.statusCode;
     const level = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
     console.log(JSON.stringify({

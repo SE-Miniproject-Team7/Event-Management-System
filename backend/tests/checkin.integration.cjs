@@ -10,7 +10,7 @@ const Registration = require('../src/models/Registration');
 const AuditLog = require('../src/models/AuditLog');
 const app = require('../src/app');
 describe('Real check-in endpoint (TC-CHK-01/02 and TC-SEC-05)', { skip: !process.env.MONGO_TEST_URI, timeout: 30000 }, () => {
-  const dbName = `ems_test_checkin_${randomUUID().replaceAll('-', '')}`;
+  const dbName = `ems_test_checkin_${randomUUID().replaceAll('-', '').slice(0, 12)}`;
   const oldSecret = process.env.JWT_SECRET;
   let organizer, otherOrganizer, attendee, event, registration;
   const cookie = user => `ems_token=${jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET)}`;
