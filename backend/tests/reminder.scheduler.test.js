@@ -26,7 +26,7 @@ describe('24-hour reminder scheduler (EMS-F-023 / TC-NTF-02)', () => {
     await runReminderScheduler({ now, windowMs: 60000 });
     expect(Event.find).toHaveBeenCalledWith({
       status: 'Published',
-      startAt: { $gt: new Date('2030-01-02T00:00:00.000Z'), $lte: new Date('2030-01-02T00:01:00.000Z') },
+      startAt: { $gte: new Date('2030-01-02T00:00:00.000Z'), $lte: new Date('2030-01-02T00:01:00.000Z') },
     });
   });
 
