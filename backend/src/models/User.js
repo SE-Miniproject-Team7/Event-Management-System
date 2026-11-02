@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema({
   phone: { type: String },
   role: { type: String, enum: ['Attendee', 'Organizer', 'Admin'], default: 'Attendee' },
   active: { type: Boolean, default: true },
+  resetTokenHash: { type: String, select: false },
+  resetTokenExpiresAt: { type: Date, select: false },
   failedLogins: { type: Number, default: 0 },
   lockUntil: { type: Date, default: null },
 }, { timestamps: true });

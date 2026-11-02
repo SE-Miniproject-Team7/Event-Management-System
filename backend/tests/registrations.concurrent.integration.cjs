@@ -95,5 +95,39 @@ describe('60 concurrent registrations against real MongoDB', {
     assert.equal(waitlisted, 50);
     assert.equal(eventAfter.seatsTaken, 10);
     assert.equal(new Set(registrations.map((registration) => registration.userId.toString())).size, 60);
+
+    const initial = await Registration.find({ eventId: event._id, status: 'Waitlisted' })
+      .sort({ waitlistPosition: 1 }).select('_id userId waitlistPosition waitlistSequence');
+    assert.deepEqual(initial.map((r) => r.waitlistPosition), Array.from({ length: 50 }, (_, i) => i + 1));
+    assert.equal(new Set(initial.map((r) => r.waitlistPosition)).size, 50);
+    assert.equal(new Set(initial.map((r) => r.waitlistSequence)).size, 50);
+
+    const confirmed = await Registration.findOne({ eventId: event._id, status: 'Confirmed' });
+    const authCookie = (attendee) => `ems_token=${jwt.sign(
+      { id: attendee._id.toString(), role: 'Attendee' }, process.env.JWT_SECRET, { expiresIn: '5m' })}`;
+    const cancel = (registration, attendee) => request(app)
+      .delete(`/api/registrations/${registration._id}`).set('Cookie', authCookie(attendee));
+    const confirmedUser = attendees.find((a) => a._id.equals(confirmed.userId));
+    assert.equal((await cancel(confirmed, confirmedUser)).status, 200);
+    const promoted = await Registration.findById(initial[0]._id);
+    assert.equal(promoted.status, 'Confirmed');
+    assert.equal(promoted.waitlistPosition, null);
+
+    let remaining = await Registration.find({ eventId: event._id, status: 'Waitlisted' })
+      .sort({ waitlistPosition: 1 }).select('_id userId waitlistPosition waitlistSequence');
+    assert.deepEqual(remaining.map((r) => r.waitlistPosition), Array.from({ length: 49 }, (_, i) => i + 1));
+    assert.deepEqual(remaining.map((r) => r.waitlistSequence), initial.slice(1).map((r) => r.waitlistSequence));
+    assert.equal((await Event.findById(event._id)).seatsTaken, 10);
+
+    const toCancel = remaining[3];
+    const waiterUser = attendees.find((a) => a._id.equals(toCancel.userId));
+    const waiterReg = await Registration.findById(toCancel._id);
+    assert.equal((await cancel(waiterReg, waiterUser)).status, 200);
+    remaining = await Registration.find({ eventId: event._id, status: 'Waitlisted' })
+      .sort({ waitlistPosition: 1 }).select('_id waitlistPosition waitlistSequence');
+    assert.deepEqual(remaining.map((r) => r.waitlistPosition), Array.from({ length: 48 }, (_, i) => i + 1));
+    assert.deepEqual(remaining.map((r) => r.waitlistSequence),
+      initial.slice(1).filter((r) => !r._id.equals(toCancel._id)).map((r) => r.waitlistSequence));
+    assert.equal((await Event.findById(event._id)).seatsTaken, 10);
   });
 });
