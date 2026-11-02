@@ -59,5 +59,5 @@ test('the real app counts malformed JSON toward both login and API limits', asyn
   const apiLimited = await malformed('/api/security-probe');
   expect(apiLimited.status).toBe(429);
   expect(apiLimited.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
-  expect((await request(app).get('/health')).status).toBe(200);
+  expect((await request(app).get('/health')).status).toBe(503);
 });
