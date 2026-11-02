@@ -100,6 +100,15 @@ router.post('/events/:id/registrations', authenticate, requireRole('Attendee'), 
         };
       }
 
+      // Serialize waitlist allocation through the event document. MongoDB retries
+      // conflicting transactions, so each registration sees the latest queue.
+      const queueEvent = await Event.findOneAndUpdate(
+        { _id: id },
+        { $inc: { waitlistSequence: 1 } },
+        { new: true, session },
+      );
+      if (!queueEvent) throw new AppError(404, 'NOT_FOUND', 'Event not found');
+
       const position = await Registration.countDocuments({
         eventId: id,
         status: 'Waitlisted',
@@ -111,6 +120,7 @@ router.post('/events/:id/registrations', authenticate, requireRole('Attendee'), 
         regCode: registrationCode(),
         status: 'Waitlisted',
         waitlistPosition: position,
+        waitlistSequence: queueEvent.waitlistSequence,
       }], { session });
 
       return {
@@ -197,7 +207,7 @@ router.delete('/registrations/:id', authenticate, requireRole('Attendee'), async
       const promoted = await Registration.findOneAndUpdate(
         { eventId: reg.eventId, status: 'Waitlisted' },
         { $set: { status: 'Confirmed', waitlistPosition: null } },
-        { sort: { createdAt: 1 }, new: false, session }
+        { sort: { waitlistSequence: 1, createdAt: 1, _id: 1 }, new: false, session }
       );
 
       // The promoted attendee left the waitlist, so everyone behind moves up one place.

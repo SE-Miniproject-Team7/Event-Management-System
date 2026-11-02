@@ -154,7 +154,9 @@ describe('Attendee registration API', () => {
     }));
 
     Registration.findOne.mockReturnValue(query(null));
-    Event.findOneAndUpdate.mockResolvedValue(null);
+    Event.findOneAndUpdate
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ waitlistSequence: 1 });
     Registration.countDocuments.mockReturnValue(query(2));
 
     Registration.create.mockResolvedValue([{
@@ -220,7 +222,9 @@ describe('Attendee registration API', () => {
     };
     Event.findById.mockReturnValue(query(fullEvent));
     Registration.findOne.mockReturnValue(query(null));
-    Event.findOneAndUpdate.mockResolvedValue(null);
+    Event.findOneAndUpdate
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ waitlistSequence: 1 });
     Registration.countDocuments.mockReturnValue(query(0));
     Registration.create.mockResolvedValue([{
       _id: REG_ID,
@@ -369,7 +373,7 @@ describe('Attendee registration API', () => {
       { eventId: EVENT_ID, status: 'Waitlisted' },
       { $set: { status: 'Confirmed', waitlistPosition: null } },
       expect.objectContaining({
-        sort: { createdAt: 1 },
+        sort: { waitlistSequence: 1, createdAt: 1, _id: 1 },
         new: false,
         session,
       })
