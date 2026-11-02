@@ -102,13 +102,13 @@ describe('60 concurrent registrations against real MongoDB', {
     assert.equal(new Set(initial.map((r) => r.waitlistPosition)).size, 50);
     assert.equal(new Set(initial.map((r) => r.waitlistSequence)).size, 50);
 
-    const confirmed = await Registration.findOne({ eventId: event._id, status: 'Confirmed' });
+    const confirmedRegistration = await Registration.findOne({ eventId: event._id, status: 'Confirmed' });
     const authCookie = (attendee) => `ems_token=${jwt.sign(
       { id: attendee._id.toString(), role: 'Attendee' }, process.env.JWT_SECRET, { expiresIn: '5m' })}`;
     const cancel = (registration, attendee) => request(app)
       .delete(`/api/registrations/${registration._id}`).set('Cookie', authCookie(attendee));
-    const confirmedUser = attendees.find((a) => a._id.equals(confirmed.userId));
-    assert.equal((await cancel(confirmed, confirmedUser)).status, 200);
+    const confirmedUser = attendees.find((a) => a._id.equals(confirmedRegistration.userId));
+    assert.equal((await cancel(confirmedRegistration, confirmedUser)).status, 200);
     const promoted = await Registration.findById(initial[0]._id);
     assert.equal(promoted.status, 'Confirmed');
     assert.equal(promoted.waitlistPosition, null);
