@@ -15,6 +15,8 @@ jest.mock('../src/middleware/auth', () => ({
   requireRole: () => (req, res, next) => next(),
 }));
 
+jest.mock('../src/models/User', () => ({ findById: jest.fn() }));
+
 jest.mock('../src/models/Event', () => ({
   findById: jest.fn(),
   findOneAndUpdate: jest.fn(),
@@ -47,6 +49,7 @@ jest.mock('mongoose', () => {
 const request = require('supertest');
 const mongoose = require('mongoose');
 const Event = require('../src/models/Event');
+const User = require('../src/models/User');
 const Registration = require('../src/models/Registration');
 const {
   enqueueNotification,
@@ -57,9 +60,12 @@ const EVENT_ID = '64b000000000000000000001';
 const REG_ID = '64b000000000000000000002';
 
 function query(value) {
-  return {
+  const result = {
     session: jest.fn().mockResolvedValue(value),
+    select: jest.fn(),
   };
+  result.select.mockReturnValue(result);
+  return result;
 }
 
 function mockTransaction() {
@@ -148,7 +154,9 @@ describe('Attendee registration API', () => {
     }));
 
     Registration.findOne.mockReturnValue(query(null));
-    Event.findOneAndUpdate.mockResolvedValue(null);
+    Event.findOneAndUpdate
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ waitlistSequence: 1 });
     Registration.countDocuments.mockReturnValue(query(2));
 
     Registration.create.mockResolvedValue([{
@@ -214,7 +222,9 @@ describe('Attendee registration API', () => {
     };
     Event.findById.mockReturnValue(query(fullEvent));
     Registration.findOne.mockReturnValue(query(null));
-    Event.findOneAndUpdate.mockResolvedValue(null);
+    Event.findOneAndUpdate
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ waitlistSequence: 1 });
     Registration.countDocuments.mockReturnValue(query(0));
     Registration.create.mockResolvedValue([{
       _id: REG_ID,
@@ -339,7 +349,18 @@ describe('Attendee registration API', () => {
     Registration.findById.mockReturnValue(query(reg));
     Registration.findOneAndUpdate.mockResolvedValue({
       _id: 'oldest-waitlisted',
+      userId: '64b000000000000000000003',
+      waitlistPosition: 1,
     });
+    Event.findById.mockReturnValue(query({
+      title: 'Design Week',
+      startAt: new Date('2030-01-01T10:00:00Z'),
+      venue: 'Hall A',
+    }));
+    User.findById.mockReturnValue(query({
+      name: 'Waitlisted Attendee',
+      email: 'waitlist@example.com',
+    }));
 
     const res = await request(app)
       .delete(`/api/registrations/${REG_ID}`);
@@ -352,13 +373,28 @@ describe('Attendee registration API', () => {
       { eventId: EVENT_ID, status: 'Waitlisted' },
       { $set: { status: 'Confirmed', waitlistPosition: null } },
       expect.objectContaining({
-        sort: { createdAt: 1 },
+        sort: { waitlistSequence: 1, createdAt: 1, _id: 1 },
         new: false,
         session,
       })
     );
 
     expect(Event.updateOne).not.toHaveBeenCalled();
+    expect(enqueueNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'WAITLIST_PROMOTION',
+        recipient: 'waitlist@example.com',
+        subject: 'Your waitlist place is confirmed: Design Week',
+        payload: expect.objectContaining({
+          idempotencyKey: `waitlist-promotion:${EVENT_ID}:oldest-waitlisted`,
+          attendeeName: 'Waitlisted Attendee',
+          eventTitle: 'Design Week',
+          startAt: new Date('2030-01-01T10:00:00Z'),
+          venue: 'Hall A',
+        }),
+        session,
+      })
+    );
   });
 
   test('cancelling a confirmed registration releases a seat when nobody is waitlisted', async () => {
@@ -372,6 +408,9 @@ describe('Attendee registration API', () => {
     };
 
     Registration.findById.mockReturnValue(query(reg));
+    Event.findById.mockReturnValue(query({
+      startAt: new Date('2030-01-01T10:00:00Z'),
+    }));
     Registration.findOneAndUpdate.mockResolvedValue(null);
     Event.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
@@ -385,6 +424,70 @@ describe('Attendee registration API', () => {
       { $inc: { seatsTaken: -1 } },
       expect.objectContaining({ session: expect.any(Object) })
     );
+    expect(enqueueNotification).not.toHaveBeenCalled();
+  });
+
+  test('rolls back cancellation and FIFO promotion when queue insertion fails', async () => {
+    const session = mockTransaction();
+    const reg = {
+      _id: REG_ID,
+      eventId: EVENT_ID,
+      userId: { equals: () => true },
+      status: 'Confirmed',
+      waitlistPosition: null,
+      save: jest.fn().mockResolvedValue(undefined),
+    };
+    Registration.findById.mockReturnValue(query(reg));
+    Event.findById.mockReturnValue(query({
+      title: 'Design Week',
+      startAt: new Date('2030-01-01T10:00:00Z'),
+      venue: 'Hall A',
+    }));
+    Registration.findOneAndUpdate.mockResolvedValue({
+      _id: 'oldest-waitlisted',
+      userId: '64b000000000000000000003',
+      waitlistPosition: 1,
+    });
+    User.findById.mockReturnValue(query({
+      name: 'Waitlisted Attendee',
+      email: 'waitlist@example.com',
+    }));
+    enqueueNotification.mockRejectedValueOnce(new Error('Notification database unavailable'));
+
+    const res = await request(app).delete(`/api/registrations/${REG_ID}`);
+
+    expect(res.status).toBe(500);
+    expect(session.withTransaction).toHaveBeenCalledTimes(1);
+    expect(session.endSession).toHaveBeenCalledTimes(1);
+    expect(enqueueNotification).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'WAITLIST_PROMOTION',
+      session,
+      payload: expect.objectContaining({
+        idempotencyKey: `waitlist-promotion:${EVENT_ID}:oldest-waitlisted`,
+      }),
+    }));
+  });
+
+  test('rejects cancellation after the event has started', async () => {
+    const reg = {
+      _id: REG_ID,
+      eventId: EVENT_ID,
+      userId: { equals: () => true },
+      status: 'Confirmed',
+      save: jest.fn(),
+    };
+    Registration.findById.mockReturnValue(query(reg));
+    Event.findById.mockReturnValue(query({
+      startAt: new Date(Date.now() - 60000),
+    }));
+
+    const res = await request(app).delete(`/api/registrations/${REG_ID}`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('CANCEL_NOT_ALLOWED');
+    expect(reg.save).not.toHaveBeenCalled();
+    expect(Registration.findOneAndUpdate).not.toHaveBeenCalled();
+    expect(enqueueNotification).not.toHaveBeenCalled();
   });
 
   test('prevents an attendee from cancelling someone else’s registration', async () => {

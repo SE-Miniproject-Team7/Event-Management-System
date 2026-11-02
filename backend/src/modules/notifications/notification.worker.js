@@ -3,6 +3,8 @@ const cron = require('node-cron');
 const mongoose = require('mongoose');
 const NotificationJob = require('../../models/NotificationJob');
 const NotificationLog = require('../../models/NotificationLog');
+const Event = require('../../models/Event');
+const Registration = require('../../models/Registration');
 const { sendEmail } = require('./email.transport');
 
 const RETRY_INTERVAL_MINUTES = Math.max(
@@ -57,6 +59,34 @@ Thank you.`,
     };
   }
 
+  if (job.type === 'WAITLIST_PROMOTION') {
+    const name = payload.attendeeName || 'Attendee';
+    const event = payload.eventTitle || 'the event';
+    const venue = payload.venue || 'the announced venue';
+    const startAt = payload.startAt
+      ? new Intl.DateTimeFormat('en-IN', {
+        dateStyle: 'full',
+        timeStyle: 'short',
+        timeZone: 'Asia/Kolkata',
+      }).format(new Date(payload.startAt))
+      : 'Please check the event page for the schedule.';
+
+    return {
+      subject: job.subject,
+      text: `Hello ${name},
+
+A place is now available for ${event}. You have been promoted from the waitlist to a confirmed registration.
+Event time (India): ${startAt}
+Venue: ${venue}
+
+Please sign in to view your registration details.`,
+      html: `<p>Hello ${escapeHtml(name)},</p>
+        <p>A place is now available for <strong>${escapeHtml(event)}</strong>. You have been promoted from the waitlist to a confirmed registration.</p>
+        <p>Event time (India): ${escapeHtml(startAt)}<br>Venue: ${escapeHtml(venue)}</p>
+        <p>Please sign in to view your registration details.</p>`,
+    };
+  }
+
   if (job.type === 'EVENT_CANCELLATION') {
     const name = payload.attendeeName || 'Attendee';
     const event = payload.eventTitle || 'your event';
@@ -100,6 +130,27 @@ Please review the updated event details before attending.${approvalNote}`,
         <p>The details for <strong>${escapeHtml(event)}</strong> have changed.</p>
         <p>Venue: ${escapeHtml(venue)}<br>Start time: ${escapeHtml(startAt)}</p>
         <p>Please review the updated event details before attending.</p>${approvalHtml}`,
+    };
+  }
+
+  if (job.type === 'EVENT_REMINDER') {
+    const name = payload.attendeeName || 'Attendee';
+    const event = payload.eventTitle || 'your event';
+    const venue = payload.venue || 'not specified';
+    const startAt = payload.startAt
+      ? new Intl.DateTimeFormat('en-IN', {
+        dateStyle: 'full',
+        timeStyle: 'short',
+        timeZone: 'Asia/Kolkata',
+      }).format(new Date(payload.startAt))
+      : 'Please check the event page for the schedule.';
+    return {
+      subject: job.subject,
+      text: `Hello ${name},\n\nReminder: "${event}" starts in approximately 24 hours.\nEvent time (India): ${startAt}\nVenue: ${venue}\n\nPlease check the event page for the latest details.`,
+      html: `<p>Hello ${escapeHtml(name)},</p>
+        <p>Reminder: <strong>${escapeHtml(event)}</strong> starts in approximately 24 hours.</p>
+        <p>Event time (India): ${escapeHtml(startAt)}<br>Venue: ${escapeHtml(venue)}</p>
+        <p>Please check the event page for the latest details.</p>`,
     };
   }
 
@@ -208,10 +259,50 @@ async function claimJob() {
   );
 }
 
+const REMINDER_DAY_MS = 24 * 60 * 60 * 1000;
+const REMINDER_TOLERANCE_MS = 15 * 60 * 1000;
+
+async function reminderIsEligible(job, now = new Date()) {
+  const payload = job.payload || {};
+  if (job.type !== 'EVENT_REMINDER') return true;
+  if (!payload.eventId || !payload.registrationId || !payload.scheduledStartAt) return false;
+
+  const [event, registration] = await Promise.all([
+    Event.findById(payload.eventId).select('status startAt'),
+    Registration.findById(payload.registrationId).select('status eventId'),
+  ]);
+  if (!event || !registration || event.status !== 'Published' || registration.status !== 'Confirmed') return false;
+  if (String(registration.eventId) !== String(event._id)) return false;
+
+  const currentStart = new Date(event.startAt).getTime();
+  const scheduledStart = new Date(payload.scheduledStartAt).getTime();
+  const timeUntilStart = currentStart - now.getTime();
+  return Number.isFinite(currentStart)
+    && currentStart === scheduledStart
+    && timeUntilStart >= REMINDER_DAY_MS - REMINDER_TOLERANCE_MS
+    && timeUntilStart <= REMINDER_DAY_MS + REMINDER_TOLERANCE_MS;
+}
+
+async function skipReminder(job) {
+  const reason = 'Reminder no longer eligible; event or registration changed';
+  await NotificationLog.create({
+    jobId: job._id, recipient: job.recipient, type: job.type,
+    attempt: job.attempts, status: 'Skipped', error: reason,
+  });
+  await NotificationJob.updateOne(
+    { _id: job._id, status: 'Processing' },
+    { $set: { status: 'Skipped', lockedAt: null, lastError: reason } }
+  );
+}
+
 async function processJob(job) {
   const attempt = job.attempts;
 
   try {
+    if (job.type === 'EVENT_REMINDER' && !(await reminderIsEligible(job))) {
+      await skipReminder(job);
+      return;
+    }
     const email = buildEmail(job);
 
     await sendEmail({
@@ -335,6 +426,7 @@ function stopNotificationWorker() {
 module.exports = {
   processDueNotifications,
   recoverExhaustedJobs,
+  reminderIsEligible,
   startNotificationWorker,
   stopNotificationWorker,
 };

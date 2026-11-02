@@ -6,6 +6,8 @@ const regSchema = new mongoose.Schema({
   regCode: { type: String, required: true, unique: true },
   status: { type: String, enum: ['Confirmed', 'Waitlisted', 'Cancelled', 'Checked-in'], required: true },
   waitlistPosition: { type: Number, default: null },
+  // Monotonic FIFO tie-breaker assigned under the event transaction lock.
+  waitlistSequence: { type: Number, default: null },
   checkedInAt: { type: Date, default: null },
 }, { timestamps: true });
 

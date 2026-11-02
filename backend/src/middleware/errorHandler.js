@@ -9,9 +9,12 @@ module.exports = (err, req, res, next) => {
   const code = trusted && typeof err.code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(err.code)
     ? err.code : malformed ? 'INVALID_JSON' : oversized ? 'PAYLOAD_TOO_LARGE' : 'INTERNAL_ERROR';
   if (status >= 500) {
-    // Palash's structured logger can consume these safe fields. Never log err,
-    // stack, request URLs/bodies/headers, MongoDB query values or credentials.
-    console.error(JSON.stringify({ level: 'error', event: 'request_failed', status, code }));
+    // Never log err, stack, request URLs/bodies/headers, MongoDB query values,
+    // or credentials.
+    console.error(JSON.stringify({
+      level: 'error', event: 'request_failed', time: new Date().toISOString(),
+      requestId: req.requestId || null, status, code,
+    }));
   }
   const body = { error: {
     code,

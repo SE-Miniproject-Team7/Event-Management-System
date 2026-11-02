@@ -37,7 +37,11 @@ describe('Security regression pass (TC-SEC-01/03/06)', () => {
     expect(res.body).toEqual({ error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } });
     expect(consoleError).toHaveBeenCalledTimes(1);
     const log = JSON.parse(consoleError.mock.calls[0][0]);
-    expect(log).toEqual({ level: 'error', event: 'request_failed', status: 500, code: 'INTERNAL_ERROR' });
+    expect(log).toEqual(expect.objectContaining({
+      level: 'error', event: 'request_failed', status: 500, code: 'INTERNAL_ERROR',
+      requestId: null,
+    }));
+    expect(log.time).toEqual(expect.any(String));
     expect(JSON.stringify(consoleError.mock.calls)).not.toContain('private-');
   });
   test('malformed JSON is rejected without reflecting or logging its body', async () => {
@@ -109,6 +113,6 @@ test.each(['server.js', 'seed.js'])('%s startup failure does not print credentia
     });
     expect(result.status).toBe(1);
     expect(result.stdout + result.stderr).not.toContain('SENSITIVE-DATABASE-URI');
-    expect(result.stderr).toMatch(/startup failed|Seed failed/);
+    expect(result.stderr).toMatch(/database_startup_failed|Seed failed/);
   } finally { fs.rmdirSync(directory) }
 });
