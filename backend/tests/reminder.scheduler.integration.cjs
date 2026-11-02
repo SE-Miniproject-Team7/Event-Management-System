@@ -51,9 +51,18 @@ describe(
     });
 
     afterEach(async () => {
-      if (jobs.length) {
-        await NotificationLog.deleteMany({ jobId: { $in: jobs } });
-        await NotificationJob.deleteMany({ _id: { $in: jobs } });
+      if (events.length) {
+        const eventIds = events.map(event => String(event._id));
+        const persistedJobs = await NotificationJob.find({
+          type: 'EVENT_REMINDER',
+          'payload.eventId': { $in: eventIds },
+        }).select('_id');
+        const jobIds = [...new Set([...jobs.map(String), ...persistedJobs.map(job => String(job._id))])]
+          .map(id => new mongoose.Types.ObjectId(id));
+        if (jobIds.length) {
+          await NotificationLog.deleteMany({ jobId: { $in: jobIds } });
+          await NotificationJob.deleteMany({ _id: { $in: jobIds } });
+        }
       }
       if (registrations.length) await Registration.deleteMany({ _id: { $in: registrations } });
       if (events.length) await Event.deleteMany({ _id: { $in: events } });
