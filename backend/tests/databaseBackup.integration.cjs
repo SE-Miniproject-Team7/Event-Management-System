@@ -51,7 +51,10 @@ describe('database backup and restore with MongoDB', {
       file,
     });
     assert.equal(backup.collectionCount, 2);
-    assert.equal((await fs.stat(file)).mode & 0o777, 0o600);
+    // Windows reports DOS permission bits; POSIX mode checks apply on Unix.
+    if (process.platform !== 'win32') {
+      assert.equal((await fs.stat(file)).mode & 0o777, 0o600);
+    }
 
     const restored = await restoreBackup({
       uri: process.env.MONGO_TEST_URI,
