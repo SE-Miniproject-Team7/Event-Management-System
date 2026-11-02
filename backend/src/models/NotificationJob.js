@@ -7,7 +7,7 @@ const notificationJobSchema = new mongoose.Schema({
     required: true,
     enum: [
       'PASSWORD_RESET',
-    'REGISTRATION_CONFIRMATION',
+      'REGISTRATION_CONFIRMATION',
       'WAITLIST_PROMOTION',
       'EVENT_CANCELLATION',
       'EVENT_UPDATED',
@@ -33,7 +33,7 @@ const notificationJobSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Processing', 'Sent', 'Failed'],
+    enum: ['Pending', 'Processing', 'Sent', 'Failed', 'Skipped'],
     default: 'Pending',
     index: true,
   },
