@@ -8,6 +8,8 @@ const {
   stopNotificationWorker,
 } = require('./modules/notifications/notification.worker');
 
+const { startReminderScheduler, stopReminderScheduler } = require('./modules/notifications/reminder.scheduler');
+
 const PORT = process.env.PORT || 5000;
 
 mongoose.connect(process.env.MONGO_URI).then(async () => {
@@ -16,6 +18,7 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
   console.log(JSON.stringify({ level: 'info', event: 'database_connected' }));
 
   startNotificationWorker();
+  startReminderScheduler();
 
   const server = app.listen(PORT, () => {
     console.log(JSON.stringify({ level: 'info', event: 'api_listening', port: Number(PORT) }));
@@ -23,6 +26,7 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
 
   const shutdown = async () => {
     stopNotificationWorker();
+    stopReminderScheduler();
 
     server.close(async () => {
       await mongoose.disconnect();

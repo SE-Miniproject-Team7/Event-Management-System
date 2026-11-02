@@ -9,6 +9,7 @@ const ALLOWED_TYPES = [
   'EVENT_UPDATED',
   'EVENT_APPROVED',
   'EVENT_REJECTED',
+  'EVENT_REMINDER',
 ];
 
 async function enqueueNotification({

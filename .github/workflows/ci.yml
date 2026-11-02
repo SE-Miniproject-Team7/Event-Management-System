@@ -54,7 +54,7 @@ jobs:
       - name: Verify concurrent registration capacity and FIFO waitlist
         run: node --test tests/registrations.concurrent.integration.cjs
       - name: Verify event audit and notification transactions
-        run: node --test tests/audit.integration.cjs tests/notifications.integration.cjs
+        run: node --test tests/audit.integration.cjs tests/notifications.integration.cjs tests/reminder.scheduler.integration.cjs
       - name: Measure service coverage
         run: npm run test:coverage
       - name: Upload service coverage report
