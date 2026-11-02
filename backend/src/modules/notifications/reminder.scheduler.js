@@ -4,13 +4,22 @@ const Registration = require('../../models/Registration');
 const { enqueueNotification } = require('./notification.service');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const REMINDER_TOLERANCE_MS = 15 * 60 * 1000;
 const SCHEDULER_INTERVAL_MS = 60 * 1000;
 let task = null;
 let running = false;
 
-async function runReminderScheduler({ now = new Date(), windowMs = SCHEDULER_INTERVAL_MS } = {}) {
-  const windowStart = new Date(now.getTime() + DAY_MS);
-  const windowEnd = new Date(windowStart.getTime() + windowMs);
+/**
+ * Queue reminders only while an event is 23h45m–24h15m away.
+ * The sliding query window also catches scheduler runs delayed by up to
+ * 15 minutes; the unique job index makes overlapping runs safe.
+ */
+async function runReminderScheduler({
+  now = new Date(),
+  toleranceMs = REMINDER_TOLERANCE_MS,
+} = {}) {
+  const windowStart = new Date(now.getTime() + DAY_MS - toleranceMs);
+  const windowEnd = new Date(now.getTime() + DAY_MS + toleranceMs);
   const events = await Event.find({
     status: 'Published',
     startAt: { $gte: windowStart, $lte: windowEnd },
@@ -73,4 +82,9 @@ function stopReminderScheduler() {
   }
 }
 
-module.exports = { runReminderScheduler, startReminderScheduler, stopReminderScheduler };
+module.exports = {
+  runReminderScheduler,
+  startReminderScheduler,
+  stopReminderScheduler,
+  REMINDER_TOLERANCE_MS,
+};
