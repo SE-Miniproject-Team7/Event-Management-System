@@ -18,6 +18,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import EventsPage from './pages/EventsPage.jsx'
 import EventDetailsPage from './pages/EventDetailsPage.jsx'
+import MyEventsPage from './pages/MyEventsPage.jsx'
 import MyRegistrationsPage from './pages/MyRegistrationsPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import api from './services/api'
@@ -102,6 +103,7 @@ function App() {
           <Link to="/">Home</Link>
           <Link to="/events">Explore Events</Link>
           <Link to="/organizer/events/new">Create Event</Link>
+          {user?.role === 'Organizer' && <Link to="/my-events">My Events</Link>}
           {user?.role === 'Attendee' && <Link to="/registrations/me">My registrations</Link>}
           {user?.role === 'Organizer' && <Link to="/organizer/checkin">Check in attendees</Link>}
           <Link to="/admin/events/pending">Admin Approvals</Link>
@@ -160,6 +162,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
+          <Route path="/my-events" element={<MyEventsPage />} />
           <Route path="/registrations/me" element={<MyRegistrationsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
