@@ -13,6 +13,7 @@ describe('Admin user management with real MongoDB', { skip: !process.env.MONGO_T
   let admin;
   let target;
   let passwordHash;
+  const testDb = `ems_test_admin_users_${randomUUID().replaceAll('-', '').slice(0, 12)}`;
   const previousSecret = process.env.JWT_SECRET;
   const cookie = (user, role = user.role) => `ems_token=${jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, { expiresIn: '60m' })}`;
   const patch = body => request(app).patch(`/api/admin/users/${target._id}`).set('Cookie', cookie(admin)).send(body);
@@ -23,7 +24,7 @@ describe('Admin user management with real MongoDB', { skip: !process.env.MONGO_T
       throw new Error('MONGO_TEST_URI must point to a dedicated ems_test_* database');
     }
     process.env.JWT_SECRET = randomUUID();
-    await mongoose.connect(uri, { serverSelectionTimeoutMS: 15000 });
+    await mongoose.connect(uri, { dbName: testDb, serverSelectionTimeoutMS: 15000 });
     await User.init();
     passwordHash = await bcrypt.hash('Correct123', 10);
   });
