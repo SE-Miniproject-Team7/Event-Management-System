@@ -1,4 +1,4 @@
-# Unit Test Report
+﻿# Unit Test Report
 
 Date: 7 November 2026 (IST). Tested code: `f132eb400f367786a54d1fde835a3d389de624db`.
 Environment: Windows, localhost development mode, Node.js 24.11.0, real MongoDB
@@ -90,3 +90,4 @@ then `node --test tests/registrations.concurrent.integration.cjs tests/databaseB
 The local combined invocation included all 11 integration files in one Node run.
 
 Machine-readable counts and per-file results: [automated results](evidence/automated-results.json).
+
