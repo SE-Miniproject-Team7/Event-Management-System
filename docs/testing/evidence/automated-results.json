@@ -1,283 +1,283 @@
-{
-  "dateIST": "2026-11-02",
-  "commit": "0a72a1291c8213484cd5b7ff7db829b1089f30ee",
-  "backend": {
-    "numTotalTests": 328,
-    "numPassedTests": 328,
-    "numFailedTests": 0,
-    "success": true
-  },
-  "frontend": {
-    "numTotalTests": 54,
-    "numPassedTests": 54,
-    "numFailedTests": 0,
-    "success": true
-  },
-  "realMongoDB": {
-    "tests": 47,
-    "passed": 47,
-    "failed": 0,
-    "skipped": 0
-  },
-  "suites": [
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/events.test.js",
-      "tests": 84,
-      "passed": 84,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/registrations.test.js",
-      "tests": 15,
-      "passed": 15,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/auth.test.js",
-      "tests": 21,
-      "passed": 21,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/notification.worker.test.js",
-      "tests": 15,
-      "passed": 15,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/adminUsers.test.js",
-      "tests": 38,
-      "passed": 38,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/checkin.test.js",
-      "tests": 31,
-      "passed": 31,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/security.test.js",
-      "tests": 17,
-      "passed": 17,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/accountRegistration.test.js",
-      "tests": 29,
-      "passed": 29,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/eventReports.test.js",
-      "tests": 6,
-      "passed": 6,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/lockout.test.js",
-      "tests": 8,
-      "passed": 8,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/notification.service.test.js",
-      "tests": 9,
-      "passed": 9,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/adminSummary.test.js",
-      "tests": 6,
-      "passed": 6,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/notification.transport.test.js",
-      "tests": 5,
-      "passed": 5,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/requireOwnership.test.js",
-      "tests": 6,
-      "passed": 6,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/rateLimit.test.js",
-      "tests": 4,
-      "passed": 4,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/reminder.scheduler.test.js",
-      "tests": 3,
-      "passed": 3,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/audit.service.test.js",
-      "tests": 5,
-      "passed": 5,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/users.test.js",
-      "tests": 4,
-      "passed": 4,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/requestLogger.test.js",
-      "tests": 2,
-      "passed": 2,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/coreMiddleware.test.js",
-      "tests": 5,
-      "passed": 5,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/reset.test.js",
-      "tests": 9,
-      "passed": 9,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/health.test.js",
-      "tests": 3,
-      "passed": 3,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/databaseBackup.security.test.js",
-      "tests": 1,
-      "passed": 1,
-      "failed": 0
-    },
-    {
-      "runner": "Backend Jest",
-      "file": "backend/tests/audit.model.test.js",
-      "tests": 2,
-      "passed": 2,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/App.test.jsx",
-      "tests": 1,
-      "passed": 1,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/security.test.jsx",
-      "tests": 2,
-      "passed": 2,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/components/QrScanner.test.jsx",
-      "tests": 3,
-      "passed": 3,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/pages/AdminCategoriesPage.test.jsx",
-      "tests": 6,
-      "passed": 6,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/pages/AdminSummaryPage.test.jsx",
-      "tests": 5,
-      "passed": 5,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/pages/AdminUsersPage.test.jsx",
-      "tests": 6,
-      "passed": 6,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/pages/CheckInPage.test.jsx",
-      "tests": 7,
-      "passed": 7,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/pages/EventDetailsPage.test.jsx",
-      "tests": 4,
-      "passed": 4,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/pages/EventReportsPage.test.jsx",
-      "tests": 9,
-      "passed": 9,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/pages/EventsPage.test.jsx",
-      "tests": 2,
-      "passed": 2,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/pages/MyRegistrationsPage.test.jsx",
-      "tests": 3,
-      "passed": 3,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/pages/PasswordResetPage.test.jsx",
-      "tests": 3,
-      "passed": 3,
-      "failed": 0
-    },
-    {
-      "runner": "Frontend Vitest",
-      "file": "frontend/src/utils/dateTime.test.js",
-      "tests": 3,
-      "passed": 3,
-      "failed": 0
-    }
-  ]
+﻿{
+    "dateIST":  "2026-11-07",
+    "commit":  "f132eb400f367786a54d1fde835a3d389de624db",
+    "backend":  {
+                    "numTotalTests":  336,
+                    "numPassedTests":  336,
+                    "numFailedTests":  0,
+                    "success":  true
+                },
+    "frontend":  {
+                     "numTotalTests":  54,
+                     "numPassedTests":  54,
+                     "numFailedTests":  0,
+                     "success":  true
+                 },
+    "realMongoDB":  {
+                        "tests":  47,
+                        "passed":  47,
+                        "failed":  0,
+                        "skipped":  0
+                    },
+    "suites":  [
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/events.test.js",
+                       "tests":  84,
+                       "passed":  84,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/registrations.test.js",
+                       "tests":  15,
+                       "passed":  15,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/auth.test.js",
+                       "tests":  21,
+                       "passed":  21,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/notification.worker.test.js",
+                       "tests":  15,
+                       "passed":  15,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/adminUsers.test.js",
+                       "tests":  38,
+                       "passed":  38,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/checkin.test.js",
+                       "tests":  31,
+                       "passed":  31,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/security.test.js",
+                       "tests":  17,
+                       "passed":  17,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/accountRegistration.test.js",
+                       "tests":  29,
+                       "passed":  29,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/eventReports.test.js",
+                       "tests":  6,
+                       "passed":  6,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/lockout.test.js",
+                       "tests":  8,
+                       "passed":  8,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/notification.service.test.js",
+                       "tests":  9,
+                       "passed":  9,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/adminSummary.test.js",
+                       "tests":  6,
+                       "passed":  6,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/notification.transport.test.js",
+                       "tests":  5,
+                       "passed":  5,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/requireOwnership.test.js",
+                       "tests":  6,
+                       "passed":  6,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/rateLimit.test.js",
+                       "tests":  4,
+                       "passed":  4,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/reminder.scheduler.test.js",
+                       "tests":  3,
+                       "passed":  3,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/audit.service.test.js",
+                       "tests":  5,
+                       "passed":  5,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/users.test.js",
+                       "tests":  4,
+                       "passed":  4,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/requestLogger.test.js",
+                       "tests":  2,
+                       "passed":  2,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/coreMiddleware.test.js",
+                       "tests":  5,
+                       "passed":  5,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/reset.test.js",
+                       "tests":  9,
+                       "passed":  9,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/health.test.js",
+                       "tests":  3,
+                       "passed":  3,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/databaseBackup.security.test.js",
+                       "tests":  1,
+                       "passed":  1,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Backend Jest",
+                       "file":  "backend/tests/audit.model.test.js",
+                       "tests":  2,
+                       "passed":  2,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/App.test.jsx",
+                       "tests":  1,
+                       "passed":  1,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/security.test.jsx",
+                       "tests":  2,
+                       "passed":  2,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/components/QrScanner.test.jsx",
+                       "tests":  3,
+                       "passed":  3,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/pages/AdminCategoriesPage.test.jsx",
+                       "tests":  6,
+                       "passed":  6,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/pages/AdminSummaryPage.test.jsx",
+                       "tests":  5,
+                       "passed":  5,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/pages/AdminUsersPage.test.jsx",
+                       "tests":  6,
+                       "passed":  6,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/pages/CheckInPage.test.jsx",
+                       "tests":  7,
+                       "passed":  7,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/pages/EventDetailsPage.test.jsx",
+                       "tests":  4,
+                       "passed":  4,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/pages/EventReportsPage.test.jsx",
+                       "tests":  9,
+                       "passed":  9,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/pages/EventsPage.test.jsx",
+                       "tests":  2,
+                       "passed":  2,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/pages/MyRegistrationsPage.test.jsx",
+                       "tests":  3,
+                       "passed":  3,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/pages/PasswordResetPage.test.jsx",
+                       "tests":  3,
+                       "passed":  3,
+                       "failed":  0
+                   },
+                   {
+                       "runner":  "Frontend Vitest",
+                       "file":  "frontend/src/utils/dateTime.test.js",
+                       "tests":  3,
+                       "passed":  3,
+                       "failed":  0
+                   }
+               ]
 }

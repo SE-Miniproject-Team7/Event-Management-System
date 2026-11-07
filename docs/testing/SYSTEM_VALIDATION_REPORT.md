@@ -1,13 +1,13 @@
 # System Validation Report
 
-Date: 2 November 2026 (IST). Tested code: `0a72a1291c8213484cd5b7ff7db829b1089f30ee`.
+Date: 3 November 2026 (IST). Tested code: `1a6a21bd99dde5bb5fac34806695475222561e20`.
 Environment: Windows, localhost development mode, Node.js 24.11.0, real MongoDB
 8.2 replica set on 127.0.0.1:27030. CI uses its own Linux/Node 20 environment;
 these reports describe this local execution, not a fresh CI run.
 No public deployment or paid hosting was used. Synthetic data was isolated from
 the development/demo database. No real account credentials are included.
 
-## Overall result: PARTIAL — not all original acceptance tests are complete
+## Overall result: PARTIAL - not all original acceptance tests are complete
 
 The functional regression suites and fresh Chrome smoke flow passed. Outstanding
 human usability, full browser/accessibility, load-tool equivalence and deployed
@@ -130,3 +130,20 @@ disclosed Node workload, not the original JMeter execution. Palash must review
 baseline equivalence and/or performance; the case is not a full pass.
 58/58 local health samples succeeded during the two phases. This is only
 a roughly ten-minute observation. See LOAD_TEST_REPORT.md for full conditions.
+
+
+
+## Additional Functional Registration Check — 3 November 2026
+
+Five synthetic attendee accounts were created locally and used to register
+for the approved Introduction to Cybersecurity Workshop.
+
+| Check | Result |
+|---|---|
+| Synthetic accounts created | 5 |
+| Workshop registration successful | 5/5 |
+| Registration errors observed | 0 |
+
+This was facilitator-performed account-based functional testing. It does not
+replace TC-USB-01, which remains pending five real first-time human participants.
+No usability timing or click-count results were collected.
