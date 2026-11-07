@@ -1,6 +1,6 @@
 # Code Coverage Report
 
-Date: 2 November 2026 (IST). Tested code: `0a72a1291c8213484cd5b7ff7db829b1089f30ee`.
+Date: 7 November 2026 (IST). Tested code: `f132eb400f367786a54d1fde835a3d389de624db`.
 Environment: Windows, localhost development mode, Node.js 24.11.0, real MongoDB
 8.2 replica set on 127.0.0.1:27030. CI uses its own Linux/Node 20 environment;
 these reports describe this local execution, not a fresh CI run.
@@ -17,12 +17,12 @@ coverage claim is made.
 
 | Metric | Covered | Total | Coverage |
 |---|---:|---:|---:|
-| Statements | 834 | 923 | 90.35% |
-| Lines | 768 | 838 | 91.64% |
-| Functions | 85 | 92 | 92.39% |
-| Branches | 615 | 769 | 79.97% |
+| Statements | 848 | 923 | 91.87% |
+| Lines | 778 | 838 | 92.84% |
+| Functions | 86 | 92 | 93.47% |
+| Branches | 634 | 769 | 82.44% |
 
-TC-MNT-01 requires at least 70% service statement coverage. This measured scope achieves **90.35%**, so that threshold passes. Frontend lint returned zero errors.
+TC-MNT-01 requires at least 70% service statement coverage. This measured scope achieves **91.87%**, so that threshold passes. Frontend lint returned zero errors.
 
 | Backend module | Statements | Lines | Functions |
 |---|---:|---:|---:|
@@ -39,7 +39,7 @@ TC-MNT-01 requires at least 70% service statement coverage. This measured scope 
 | `backend/src/modules/events/events.routes.js` | 94.5% | 96.93% | 93.75% |
 | `backend/src/modules/notifications/email.transport.js` | 100% | 100% | 100% |
 | `backend/src/modules/notifications/notification.service.js` | 92.3% | 92.3% | 100% |
-| `backend/src/modules/notifications/notification.worker.js` | 77.51% | 80.67% | 81.81% |
+| `backend/src/modules/notifications/notification.worker.js` | 88.37% | 89.07% | 90.90% |
 | `backend/src/modules/notifications/reminder.scheduler.js` | 94.73% | 97.14% | 100% |
 | `backend/src/modules/registrations/registrations.routes.js` | 86.17% | 87.09% | 100% |
 | `backend/src/modules/reports/eventReport.routes.js` | 100% | 100% | 100% |

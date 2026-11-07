@@ -1,6 +1,6 @@
 # Unit Test Report
 
-Date: 2 November 2026 (IST). Tested code: `0a72a1291c8213484cd5b7ff7db829b1089f30ee`.
+Date: 7 November 2026 (IST). Tested code: `f132eb400f367786a54d1fde835a3d389de624db`.
 Environment: Windows, localhost development mode, Node.js 24.11.0, real MongoDB
 8.2 replica set on 127.0.0.1:27030. CI uses its own Linux/Node 20 environment;
 these reports describe this local execution, not a fresh CI run.
@@ -11,7 +11,7 @@ the development/demo database. No real account credentials are included.
 
 | Runner | Tests | Passed | Failed |
 |---|---:|---:|---:|
-| Backend Jest | 328 | 328 | 0 |
+| Backend Jest | 336 | 336 | 0 |
 | Frontend Vitest | 54 | 54 | 0 |
 | Real MongoDB integration (reported separately) | 47 | 47 | 0 |
 
@@ -25,7 +25,7 @@ Frontend ESLint and the Vite production build also passed.
 ## Owner review
 
 Palash reviewed the counts against `evidence/automated-results.json` and the load
-evidence. The 328 backend, 54 frontend, and 47 real-MongoDB integration tests
+evidence. The 336 backend, 54 frontend, and 47 real-MongoDB integration tests
 are reported as passing for the tested commit above; this task did not rerun
 those unchanged suites. These functional test counts do not convert the failed
 search degradation gate into a pass. See the load report review below.
