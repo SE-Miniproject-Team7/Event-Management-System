@@ -16,6 +16,8 @@ jest.mock('mongoose', () => {
 
 jest.mock('../src/models/NotificationJob');
 jest.mock('../src/models/NotificationLog');
+jest.mock('../src/models/Event');
+jest.mock('../src/models/Registration');
 
 jest.mock('../src/modules/notifications/email.transport', () => ({
   sendEmail: jest.fn(),
@@ -25,12 +27,15 @@ const mongoose = require('mongoose');
 const cron = require('node-cron');
 const NotificationJob = require('../src/models/NotificationJob');
 const NotificationLog = require('../src/models/NotificationLog');
+const Registration = require('../src/models/Registration');
+const Event = require('../src/models/Event');
 const { sendEmail } = require('../src/modules/notifications/email.transport');
 
 const {
   processDueNotifications,
   startNotificationWorker,
   stopNotificationWorker,
+  reminderIsEligible,
 } = require('../src/modules/notifications/notification.worker');
 
 describe('Notification worker', () => {
@@ -69,6 +74,99 @@ describe('Notification worker', () => {
 
   afterEach(() => {
     consoleError.mockRestore();
+  });
+
+
+  describe('reminderIsEligible', () => {
+    const now = new Date('2026-11-03T10:00:00.000Z');
+    const startAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const reminderJob = overrides => ({
+      type: 'EVENT_REMINDER',
+      payload: {
+        eventId: 'event-123',
+        registrationId: 'registration-123',
+        scheduledStartAt: startAt.toISOString(),
+        ...overrides,
+      },
+    });
+
+    const mockEvent = event => {
+      Event.findById.mockReturnValue({
+        select: jest.fn().mockResolvedValue(event),
+      });
+    };
+
+    const mockRegistration = registration => {
+      Registration.findById.mockReturnValue({
+        select: jest.fn().mockResolvedValue(registration),
+      });
+    };
+
+    const validEvent = {
+      _id: 'event-123',
+      status: 'Published',
+      startAt,
+    };
+
+    const validRegistration = {
+      _id: 'registration-123',
+      status: 'Confirmed',
+      eventId: 'event-123',
+    };
+
+    beforeEach(() => {
+      mockEvent(validEvent);
+      mockRegistration(validRegistration);
+    });
+
+    test('allows non-reminder notification jobs', async () => {
+      expect(await reminderIsEligible({ type: 'OTHER' }, now)).toBe(true);
+    });
+
+    test('rejects reminder jobs missing required payload fields', async () => {
+      expect(await reminderIsEligible(reminderJob({ eventId: null }), now)).toBe(false);
+      expect(await reminderIsEligible(reminderJob({ registrationId: null }), now)).toBe(false);
+      expect(await reminderIsEligible(reminderJob({ scheduledStartAt: null }), now)).toBe(false);
+    });
+
+    test('rejects when the event or registration does not exist', async () => {
+      mockEvent(null);
+      expect(await reminderIsEligible(reminderJob(), now)).toBe(false);
+
+      mockEvent(validEvent);
+      mockRegistration(null);
+      expect(await reminderIsEligible(reminderJob(), now)).toBe(false);
+    });
+
+    test('rejects events that are not Published', async () => {
+      mockEvent({ ...validEvent, status: 'Draft' });
+      expect(await reminderIsEligible(reminderJob(), now)).toBe(false);
+    });
+
+    test('rejects registrations that are not Confirmed', async () => {
+      mockRegistration({ ...validRegistration, status: 'Waitlisted' });
+      expect(await reminderIsEligible(reminderJob(), now)).toBe(false);
+    });
+
+    test('rejects registrations belonging to a different event', async () => {
+      mockRegistration({ ...validRegistration, eventId: 'another-event' });
+      expect(await reminderIsEligible(reminderJob(), now)).toBe(false);
+    });
+
+    test('rejects when the scheduled start no longer matches the event', async () => {
+      expect(
+        await reminderIsEligible(
+          reminderJob({ scheduledStartAt: new Date(startAt.getTime() + 1000).toISOString() }),
+          now
+        )
+      ).toBe(false);
+    });
+
+    test('rejects invalid event start dates', async () => {
+      mockEvent({ ...validEvent, startAt: 'not-a-date' });
+      expect(await reminderIsEligible(reminderJob(), now)).toBe(false);
+    });
   });
 
   test('sends reset links only to the mail transport and never into logs', async () => {

@@ -90,3 +90,11 @@ then `node --test tests/registrations.concurrent.integration.cjs tests/databaseB
 The local combined invocation included all 11 integration files in one Node run.
 
 Machine-readable counts and per-file results: [automated results](evidence/automated-results.json).
+
+## Backend Jest coverage rerun
+
+On 8 November 2026 (IST), commit `de16fd3aacfb82054f2b11348237906c269866dd` passed
+**336/336 backend Jest tests in 24 suites**.
+The earlier table preserves the separate 2 November run, including its
+frontend and MongoDB integration results. The updated per-file Jest counts are
+in [automated-results.json](evidence/automated-results.json).

@@ -1,22 +1,14 @@
 # Branch Coverage Report
 
-Date: 2 November 2026 (IST). Tested code: `0a72a1291c8213484cd5b7ff7db829b1089f30ee`.
-Environment: Windows, localhost development mode, Node.js 24.11.0, real MongoDB
-8.2 replica set on 127.0.0.1:27030. CI uses its own Linux/Node 20 environment;
-these reports describe this local execution, not a fresh CI run.
-No public deployment or paid hosting was used. Synthetic data was isolated from
-the development/demo database. No real account credentials are included.
+Measurement date: 8 November 2026 (IST). Tested commit: `de16fd3aacfb82054f2b11348237906c269866dd`.
+Environment: Windows, Node.js v24.11.0, Jest/Istanbul.
+Scope: `backend/src/modules/**/*.js`. The plan specifies a 70% backend
+service statement threshold and gives no separate branch threshold.
 
-## Result
-
-Jest/Istanbul measured **615/769 branch alternatives
-(79.97%)** in `backend/src/modules/**/*.js`.
-An Istanbul branch alternative is a recorded decision arm (such as an if/else,
-conditional expression or short-circuit path), not a separate test case.
-
-The submitted plan defines a 70% service statement threshold, not a separate
-branch percentage threshold. This report records branch coverage without
-inventing a branch acceptance gate. Frontend branch coverage is not measured.
+Jest exercised **634/769 branch alternatives
+(82.44%)**. See [coverage-summary.json](evidence/coverage-summary.json)
+for the machine-readable results and the [Code Coverage Report](CODE_COVERAGE_REPORT.md)
+for the reproduction command.
 
 | Module | Covered alternatives | Total | Branch coverage |
 |---|---:|---:|---:|
@@ -24,16 +16,16 @@ inventing a branch acceptance gate. Frontend branch coverage is not measured.
 | `backend/src/modules/admin/withAdminLock.js` | 0 | 2 | 0% |
 | `backend/src/modules/attendance/attendance.routes.js` | 10 | 10 | 100% |
 | `backend/src/modules/attendance/checkin.service.js` | 16 | 16 | 100% |
-| `backend/src/modules/audit/actions.js` | 0 | 0 | 100% |
+| `backend/src/modules/audit/actions.js` | 0 | 0 | n/a |
 | `backend/src/modules/audit/audit.service.js` | 20 | 23 | 86.95% |
 | `backend/src/modules/auth/auth.routes.js` | 55 | 64 | 85.93% |
 | `backend/src/modules/auth/lockout.js` | 29 | 29 | 100% |
 | `backend/src/modules/auth/reset.service.js` | 19 | 24 | 79.16% |
-| `backend/src/modules/categories/categories.routes.js` | 0 | 0 | 100% |
+| `backend/src/modules/categories/categories.routes.js` | 0 | 0 | n/a |
 | `backend/src/modules/events/events.routes.js` | 178 | 207 | 85.99% |
 | `backend/src/modules/notifications/email.transport.js` | 14 | 16 | 87.5% |
 | `backend/src/modules/notifications/notification.service.js` | 26 | 28 | 92.85% |
-| `backend/src/modules/notifications/notification.worker.js` | 55 | 114 | 48.24% |
+| `backend/src/modules/notifications/notification.worker.js` | 74 | 114 | 64.91% |
 | `backend/src/modules/notifications/reminder.scheduler.js` | 16 | 19 | 84.21% |
 | `backend/src/modules/registrations/registrations.routes.js` | 38 | 55 | 69.09% |
 | `backend/src/modules/reports/eventReport.routes.js` | 49 | 54 | 90.74% |
@@ -42,8 +34,8 @@ inventing a branch acceptance gate. Frontend branch coverage is not measured.
 
 ## Uncovered decision locations
 
-Line numbers refer to the tested commit above. Zero executions indicate a gap,
-not a demonstrated defect. Multiple arms at one source location are possible.
+Lines refer to the tested commit. Arm indexes are zero-based Istanbul indexes.
+The table records decisions the suite did not exercise.
 
 | Module | Line | Branch type | Uncovered arm indexes |
 |---|---:|---|---|
@@ -60,16 +52,16 @@ not a demonstrated defect. Multiple arms at one source location are possible.
 | `backend/src/modules/admin/admin.routes.js` | 149 | if | 0, 1 |
 | `backend/src/modules/admin/withAdminLock.js` | 12 | if | 0, 1 |
 | `backend/src/modules/audit/audit.service.js` | 13 | cond-expr | 1 |
-| `backend/src/modules/audit/audit.service.js` | 22 | if | 0 |
 | `backend/src/modules/audit/audit.service.js` | 22 | binary-expr | 1 |
+| `backend/src/modules/audit/audit.service.js` | 22 | if | 0 |
 | `backend/src/modules/auth/auth.routes.js` | 97 | if | 1 |
 | `backend/src/modules/auth/auth.routes.js` | 111 | cond-expr | 0, 1 |
-| `backend/src/modules/auth/auth.routes.js` | 112 | if | 0, 1 |
 | `backend/src/modules/auth/auth.routes.js` | 112 | binary-expr | 0, 1 |
+| `backend/src/modules/auth/auth.routes.js` | 112 | if | 0, 1 |
 | `backend/src/modules/auth/auth.routes.js` | 132 | cond-expr | 1 |
 | `backend/src/modules/auth/auth.routes.js` | 170 | if | 1 |
-| `backend/src/modules/auth/reset.service.js` | 13 | if | 0 |
 | `backend/src/modules/auth/reset.service.js` | 13 | binary-expr | 4 |
+| `backend/src/modules/auth/reset.service.js` | 13 | if | 0 |
 | `backend/src/modules/auth/reset.service.js` | 35 | if | 1 |
 | `backend/src/modules/auth/reset.service.js` | 46 | if | 0, 1 |
 | `backend/src/modules/events/events.routes.js` | 20 | binary-expr | 1 |
@@ -130,16 +122,9 @@ not a demonstrated defect. Multiple arms at one source location are possible.
 | `backend/src/modules/notifications/notification.worker.js` | 172 | binary-expr | 1 |
 | `backend/src/modules/notifications/notification.worker.js` | 173 | binary-expr | 1 |
 | `backend/src/modules/notifications/notification.worker.js` | 265 | default-arg | 0 |
-| `backend/src/modules/notifications/notification.worker.js` | 266 | binary-expr | 0, 1 |
-| `backend/src/modules/notifications/notification.worker.js` | 267 | if | 0, 1 |
-| `backend/src/modules/notifications/notification.worker.js` | 268 | if | 0, 1 |
-| `backend/src/modules/notifications/notification.worker.js` | 268 | binary-expr | 0, 1, 2 |
-| `backend/src/modules/notifications/notification.worker.js` | 274 | if | 0, 1 |
-| `backend/src/modules/notifications/notification.worker.js` | 274 | binary-expr | 0, 1, 2, 3 |
-| `backend/src/modules/notifications/notification.worker.js` | 275 | if | 0, 1 |
-| `backend/src/modules/notifications/notification.worker.js` | 280 | binary-expr | 0, 1, 2, 3 |
-| `backend/src/modules/notifications/notification.worker.js` | 302 | if | 0 |
+| `backend/src/modules/notifications/notification.worker.js` | 280 | binary-expr | 2, 3 |
 | `backend/src/modules/notifications/notification.worker.js` | 302 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 302 | if | 0 |
 | `backend/src/modules/notifications/notification.worker.js` | 410 | if | 0 |
 | `backend/src/modules/notifications/notification.worker.js` | 420 | if | 1 |
 | `backend/src/modules/notifications/reminder.scheduler.js` | 48 | binary-expr | 1 |
@@ -171,5 +156,3 @@ not a demonstrated defect. Multiple arms at one source location are possible.
 | `backend/src/modules/users/users.routes.js` | 23 | if | 0 |
 | `backend/src/modules/users/users.routes.js` | 30 | if | 1 |
 | `backend/src/modules/users/users.routes.js` | 46 | binary-expr | 1 |
-
-Reproduce using the coverage command in [Code Coverage Report](CODE_COVERAGE_REPORT.md).

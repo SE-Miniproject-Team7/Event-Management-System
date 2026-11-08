@@ -362,7 +362,7 @@ Requirements: EMS-NF-005, EMS-NF-009.
 
 **Sprint-update execution notes:** Chrome at 360/1920 on three pages is only partial evidence. Retain Firefox/Edge and Lighthouse>=90 on four pages as pending until actually measured.
 
-**Evidence references:** fresh Chrome desktop/mobile smoke; Edge/Firefox/Lighthouse pending.
+**Evidence references:** [8 November browser and Lighthouse evidence](evidence/browser-follow-up.json).
 
 ## TC-MNT-01
 
@@ -463,4 +463,3 @@ Requirements: EMS-SEC-008.
 **Sprint-update execution notes:** Use fully redacted history scans and production-only npm audits. Development dependency findings are outside the production audit result, not silently counted as clean.
 
 **Evidence references:** fresh production audits and redacted Gitleaks history scan.
-

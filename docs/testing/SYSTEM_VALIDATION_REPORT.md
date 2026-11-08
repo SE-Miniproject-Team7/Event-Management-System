@@ -7,7 +7,7 @@ these reports describe this local execution, not a fresh CI run.
 No public deployment or paid hosting was used. Synthetic data was isolated from
 the development/demo database. No real account credentials are included.
 
-## Overall result: PARTIAL — not all original acceptance tests are complete
+## Overall result: PARTIAL - not all original acceptance tests are complete
 
 The functional regression suites and fresh Chrome smoke flow passed. Outstanding
 human usability, full browser/accessibility, load-tool equivalence and deployed
@@ -84,7 +84,7 @@ remaining part. LOAD CHECK refers to the separately measured workload below.
 | TC-PERF-02 | LOAD CHECK | timed localhost registration workload |
 | TC-AVL-01 | PARTIAL | health.test.js; databaseBackup.integration.cjs; timed /health sampling |
 | TC-USB-01 | PENDING HUMAN TEST | five first-time human participants required |
-| TC-CMP-01 | PARTIAL | fresh Chrome desktop/mobile smoke; Edge/Firefox/Lighthouse pending |
+| TC-CMP-01 | PASS for the exercised flows | 8 November browser and accessibility follow-up |
 | TC-MNT-01 | AUTOMATED EVIDENCE | Jest coverage summary; frontend ESLint |
 | TC-TZ-01 | PARTIAL | dateTime.test.js; backend IST date-boundary cases |
 | TC-SAF-01 | PARTIAL | fresh Chrome registration confirmation dialog; adminUsers.test.js |
@@ -100,7 +100,7 @@ remaining part. LOAD CHECK refers to the separately measured workload below.
 
 - TC-USB-01: five real participants, at least four successful within three minutes
   and at most five clicks without help. Use [the observation form](USABILITY_RECORD.md).
-- TC-CMP-01: remaining browser/width matrix and four Lighthouse scores >=90.
+- TC-CMP-01: see the 8 November follow-up for browser and Lighthouse results.
 - TC-SEC-02/deployed ZAP: not executed for localhost-only scope. Preserve this
   exception in DEVIATIONS; no instructor-approved waiver is asserted.
 - TC-PERF-01/02: see [Load Test Report](LOAD_TEST_REPORT.md). The Node workload
@@ -126,7 +126,49 @@ Registration: 500 requests over 300.012 seconds, p95 404.60 ms, zero errors.
 The sequential search baseline p95 was 12.37 ms; the recorded p95 ratio
 produces 2059.69% degradation and FAILS the original <=10% criterion under
 this baseline definition. Absolute latency/error gates pass. This is a
-disclosed Node workload, not the original JMeter execution. Palash must review
-baseline equivalence and/or performance; the case is not a full pass.
+disclosed Node workload, not the original JMeter execution. Palash reviewed the methodology in [Load Test Report](LOAD_TEST_REPORT.md).
 58/58 local health samples succeeded during the two phases. This is only
 a roughly ten-minute observation. See LOAD_TEST_REPORT.md for full conditions.
+
+
+
+## Additional Functional Registration Check — 3 November 2026
+
+The PR recorded this separate check against commit `1a6a21bd99dde5bb5fac34806695475222561e20`.
+Five synthetic attendee accounts were created locally and used to register
+for the approved Introduction to Cybersecurity Workshop.
+
+| Check | Result |
+|---|---|
+| Synthetic accounts created | 5 |
+| Workshop registration successful | 5/5 |
+| Registration errors observed | 0 |
+
+This was facilitator-performed account-based functional testing. It does not
+replace TC-USB-01, which remains pending five real first-time human participants.
+No usability timing or click-count results were collected.
+
+## Browser and accessibility follow-up
+
+On 8 November 2026 (IST), commit `de16fd3aacfb82054f2b11348237906c269866dd` was checked against
+a local Express API and an isolated MongoDB database. Firefox used Playwright's
+Firefox build. Lighthouse used Chrome and the mobile preset. Overflow checks
+covered My Registrations, organizer reports, and admin categories.
+
+| Browser | Version | Flow width | Checks passed | Horizontal overflow |
+|---|---|---:|---:|---|
+| chrome | 156.0.8078.80 | 1920 px | 7/7 | None observed |
+| chrome | 156.0.8078.80 | 360 px | 7/7 | None observed |
+| edge | 157.0.4341.42 | 1920 px | 7/7 | None observed |
+| edge | 157.0.4341.42 | 360 px | 7/7 | None observed |
+| firefox | 153.0 | 1920 px | 7/7 | None observed |
+| firefox | 153.0 | 360 px | 7/7 | None observed |
+
+| Audited page | Accessibility | Required |
+|---|---:|---:|
+| `/` | 100 | 90 |
+| `/events` | 100 | 90 |
+| `/events/:id` | 100 | 90 |
+| `/login` | 100 | 90 |
+
+See [browser follow-up evidence](evidence/browser-follow-up.json) for tested flows and audit details.
