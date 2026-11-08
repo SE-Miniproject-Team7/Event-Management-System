@@ -1,67 +1,158 @@
-﻿# Branch Coverage Report
+# Branch Coverage Report
 
-Date: 7 November 2026 (IST).
-Tested code: `f132eb400f367786a54d1fde835a3d389de624db`.
-Environment: Windows, localhost development mode, Node.js 24.
-Coverage tool: Jest/Istanbul.
+Measurement date: 8 November 2026 (IST). Tested commit: `de16fd3aacfb82054f2b11348237906c269866dd`.
+Environment: Windows, Node.js v24.11.0, Jest/Istanbul.
+Scope: `backend/src/modules/**/*.js`. The plan specifies a 70% backend
+service statement threshold and gives no separate branch threshold.
 
-## Result
+Jest exercised **634/769 branch alternatives
+(82.44%)**. See [coverage-summary.json](evidence/coverage-summary.json)
+for the machine-readable results and the [Code Coverage Report](CODE_COVERAGE_REPORT.md)
+for the reproduction command.
 
-The backend test suite completed successfully:
+| Module | Covered alternatives | Total | Branch coverage |
+|---|---:|---:|---:|
+| `backend/src/modules/admin/admin.routes.js` | 69 | 81 | 85.18% |
+| `backend/src/modules/admin/withAdminLock.js` | 0 | 2 | 0% |
+| `backend/src/modules/attendance/attendance.routes.js` | 10 | 10 | 100% |
+| `backend/src/modules/attendance/checkin.service.js` | 16 | 16 | 100% |
+| `backend/src/modules/audit/actions.js` | 0 | 0 | n/a |
+| `backend/src/modules/audit/audit.service.js` | 20 | 23 | 86.95% |
+| `backend/src/modules/auth/auth.routes.js` | 55 | 64 | 85.93% |
+| `backend/src/modules/auth/lockout.js` | 29 | 29 | 100% |
+| `backend/src/modules/auth/reset.service.js` | 19 | 24 | 79.16% |
+| `backend/src/modules/categories/categories.routes.js` | 0 | 0 | n/a |
+| `backend/src/modules/events/events.routes.js` | 178 | 207 | 85.99% |
+| `backend/src/modules/notifications/email.transport.js` | 14 | 16 | 87.5% |
+| `backend/src/modules/notifications/notification.service.js` | 26 | 28 | 92.85% |
+| `backend/src/modules/notifications/notification.worker.js` | 74 | 114 | 64.91% |
+| `backend/src/modules/notifications/reminder.scheduler.js` | 16 | 19 | 84.21% |
+| `backend/src/modules/registrations/registrations.routes.js` | 38 | 55 | 69.09% |
+| `backend/src/modules/reports/eventReport.routes.js` | 49 | 54 | 90.74% |
+| `backend/src/modules/reports/summary.service.js` | 4 | 5 | 80% |
+| `backend/src/modules/users/users.routes.js` | 17 | 22 | 77.27% |
 
-- Test suites: **24 passed / 24 total**
-- Tests: **336 passed / 336 total**
-- Snapshots: 0
-- Duration: 26.471 seconds
+## Uncovered decision locations
 
-## Coverage Summary
+Lines refer to the tested commit. Arm indexes are zero-based Istanbul indexes.
+The table records decisions the suite did not exercise.
 
-| Metric | Coverage | Covered / Total |
-|---|---:|---:|
-| Statements | 91.87% | 848 / 923 |
-| Branches | 82.44% | 634 / 769 |
-| Functions | 93.47% | 86 / 92 |
-| Lines | 92.84% | 778 / 838 |
-
-Branch coverage measures the decision alternatives exercised by the test suite. A total of 135 branch alternatives remain uncovered (769 total - 634 covered).
-
-The submitted plan defines a 70% service statement threshold, not a separate branch coverage threshold. This report records branch coverage without inventing a branch acceptance gate.
-
-## Conclusion
-
-The automated backend test suite passed with no test failures. Statement coverage reached 91.87%, and branch coverage reached 82.44%. Uncovered branches remain opportunities for further test improvements and do not necessarily indicate defects.
-
-These results represent the local test execution and should not be interpreted as a fresh CI or production deployment result.
-
-
-## Uncovered Branch Breakdown by Module
-
-The LCOV report was analyzed to identify uncovered branch alternatives by source module. The following breakdown accounts for all 135 uncovered branch alternatives.
-
-| Module | Uncovered Branch Alternatives |
-|---|---:|
-| `notifications/notification.worker.js` | 40 |
-| `events/events.routes.js` | 29 |
-| `registrations/registrations.routes.js` | 17 |
-| `admin/admin.routes.js` | 12 |
-| `auth/auth.routes.js` | 9 |
-| `reports/eventReport.routes.js` | 5 |
-| `users/users.routes.js` | 5 |
-| `auth/reset.service.js` | 5 |
-| `notifications/reminder.scheduler.js` | 3 |
-| `audit/audit.service.js` | 3 |
-| `notifications/email.transport.js` | 2 |
-| `admin/withAdminLock.js` | 2 |
-| `notifications/notification.service.js` | 2 |
-| `reports/summary.service.js` | 1 |
-| **Total** | **135** |
-
-### Analysis
-
-The largest concentration of uncovered branch alternatives is in `notifications/notification.worker.js` (40), followed by `events/events.routes.js` (29) and `registrations/registrations.routes.js` (17).
-
-These three modules account for 86 of the 135 uncovered branch alternatives. This breakdown identifies areas where additional tests may improve branch coverage. Uncovered alternatives do not necessarily indicate defects; they represent execution paths not exercised by the current test suite.
-
-### Conclusion
-
-The backend achieved 82.44% branch coverage, with 634 of 769 branch alternatives covered. The uncovered alternatives have been documented by module to support future targeted testing and coverage improvement.
+| Module | Line | Branch type | Uncovered arm indexes |
+|---|---:|---|---|
+| `backend/src/modules/admin/admin.routes.js` | 25 | binary-expr | 1 |
+| `backend/src/modules/admin/admin.routes.js` | 28 | if | 1 |
+| `backend/src/modules/admin/admin.routes.js` | 29 | if | 0 |
+| `backend/src/modules/admin/admin.routes.js` | 86 | if | 0 |
+| `backend/src/modules/admin/admin.routes.js` | 123 | if | 1 |
+| `backend/src/modules/admin/admin.routes.js` | 129 | if | 0 |
+| `backend/src/modules/admin/admin.routes.js` | 132 | binary-expr | 1 |
+| `backend/src/modules/admin/admin.routes.js` | 134 | cond-expr | 1 |
+| `backend/src/modules/admin/admin.routes.js` | 135 | if | 0 |
+| `backend/src/modules/admin/admin.routes.js` | 140 | if | 1 |
+| `backend/src/modules/admin/admin.routes.js` | 149 | if | 0, 1 |
+| `backend/src/modules/admin/withAdminLock.js` | 12 | if | 0, 1 |
+| `backend/src/modules/audit/audit.service.js` | 13 | cond-expr | 1 |
+| `backend/src/modules/audit/audit.service.js` | 22 | binary-expr | 1 |
+| `backend/src/modules/audit/audit.service.js` | 22 | if | 0 |
+| `backend/src/modules/auth/auth.routes.js` | 97 | if | 1 |
+| `backend/src/modules/auth/auth.routes.js` | 111 | cond-expr | 0, 1 |
+| `backend/src/modules/auth/auth.routes.js` | 112 | binary-expr | 0, 1 |
+| `backend/src/modules/auth/auth.routes.js` | 112 | if | 0, 1 |
+| `backend/src/modules/auth/auth.routes.js` | 132 | cond-expr | 1 |
+| `backend/src/modules/auth/auth.routes.js` | 170 | if | 1 |
+| `backend/src/modules/auth/reset.service.js` | 13 | binary-expr | 4 |
+| `backend/src/modules/auth/reset.service.js` | 13 | if | 0 |
+| `backend/src/modules/auth/reset.service.js` | 35 | if | 1 |
+| `backend/src/modules/auth/reset.service.js` | 46 | if | 0, 1 |
+| `backend/src/modules/events/events.routes.js` | 20 | binary-expr | 1 |
+| `backend/src/modules/events/events.routes.js` | 133 | binary-expr | 1 |
+| `backend/src/modules/events/events.routes.js` | 152 | cond-expr | 1 |
+| `backend/src/modules/events/events.routes.js` | 153 | cond-expr | 1 |
+| `backend/src/modules/events/events.routes.js` | 161 | if | 0 |
+| `backend/src/modules/events/events.routes.js` | 162 | if | 0 |
+| `backend/src/modules/events/events.routes.js` | 163 | if | 0 |
+| `backend/src/modules/events/events.routes.js` | 170 | if | 0 |
+| `backend/src/modules/events/events.routes.js` | 177 | cond-expr | 1 |
+| `backend/src/modules/events/events.routes.js` | 192 | if | 1 |
+| `backend/src/modules/events/events.routes.js` | 198 | if | 0 |
+| `backend/src/modules/events/events.routes.js` | 205 | binary-expr | 1 |
+| `backend/src/modules/events/events.routes.js` | 221 | if | 0 |
+| `backend/src/modules/events/events.routes.js` | 222 | binary-expr | 1 |
+| `backend/src/modules/events/events.routes.js` | 244 | cond-expr | 0 |
+| `backend/src/modules/events/events.routes.js` | 247 | if | 0 |
+| `backend/src/modules/events/events.routes.js` | 250 | cond-expr | 0, 1 |
+| `backend/src/modules/events/events.routes.js` | 252 | cond-expr | 0, 1 |
+| `backend/src/modules/events/events.routes.js` | 256 | binary-expr | 0, 1 |
+| `backend/src/modules/events/events.routes.js` | 257 | binary-expr | 0, 1 |
+| `backend/src/modules/events/events.routes.js` | 259 | cond-expr | 0, 1 |
+| `backend/src/modules/events/events.routes.js` | 296 | binary-expr | 1 |
+| `backend/src/modules/events/events.routes.js` | 305 | if | 0 |
+| `backend/src/modules/events/events.routes.js` | 312 | binary-expr | 1 |
+| `backend/src/modules/notifications/email.transport.js` | 20 | binary-expr | 1 |
+| `backend/src/modules/notifications/email.transport.js` | 46 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.service.js` | 19 | default-arg | 0 |
+| `backend/src/modules/notifications/notification.service.js` | 57 | if | 0 |
+| `backend/src/modules/notifications/notification.worker.js` | 32 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 36 | if | 0 |
+| `backend/src/modules/notifications/notification.worker.js` | 43 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 44 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 45 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 63 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 64 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 65 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 66 | cond-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 91 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 92 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 93 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 110 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 111 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 112 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 113 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 114 | cond-expr | 0 |
+| `backend/src/modules/notifications/notification.worker.js` | 117 | cond-expr | 0 |
+| `backend/src/modules/notifications/notification.worker.js` | 136 | if | 0 |
+| `backend/src/modules/notifications/notification.worker.js` | 137 | binary-expr | 0, 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 138 | binary-expr | 0, 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 139 | binary-expr | 0, 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 140 | cond-expr | 0, 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 158 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 159 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 170 | if | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 171 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 172 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 173 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 265 | default-arg | 0 |
+| `backend/src/modules/notifications/notification.worker.js` | 280 | binary-expr | 2, 3 |
+| `backend/src/modules/notifications/notification.worker.js` | 302 | binary-expr | 1 |
+| `backend/src/modules/notifications/notification.worker.js` | 302 | if | 0 |
+| `backend/src/modules/notifications/notification.worker.js` | 410 | if | 0 |
+| `backend/src/modules/notifications/notification.worker.js` | 420 | if | 1 |
+| `backend/src/modules/notifications/reminder.scheduler.js` | 48 | binary-expr | 1 |
+| `backend/src/modules/notifications/reminder.scheduler.js` | 50 | binary-expr | 1 |
+| `backend/src/modules/notifications/reminder.scheduler.js` | 61 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 50 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 89 | binary-expr | 1 |
+| `backend/src/modules/registrations/registrations.routes.js` | 110 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 136 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 149 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 150 | if | 0, 1 |
+| `backend/src/modules/registrations/registrations.routes.js` | 175 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 182 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 190 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 206 | if | 1 |
+| `backend/src/modules/registrations/registrations.routes.js` | 234 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 244 | binary-expr | 1 |
+| `backend/src/modules/registrations/registrations.routes.js` | 247 | binary-expr | 1 |
+| `backend/src/modules/registrations/registrations.routes.js` | 260 | if | 0 |
+| `backend/src/modules/registrations/registrations.routes.js` | 264 | if | 0, 1 |
+| `backend/src/modules/reports/eventReport.routes.js` | 21 | cond-expr | 1 |
+| `backend/src/modules/reports/eventReport.routes.js` | 24 | binary-expr | 1 |
+| `backend/src/modules/reports/eventReport.routes.js` | 25 | binary-expr | 1 |
+| `backend/src/modules/reports/eventReport.routes.js` | 28 | binary-expr | 1 |
+| `backend/src/modules/reports/eventReport.routes.js` | 38 | if | 1 |
+| `backend/src/modules/reports/summary.service.js` | 12 | if | 1 |
+| `backend/src/modules/users/users.routes.js` | 8 | binary-expr | 1 |
+| `backend/src/modules/users/users.routes.js` | 17 | if | 0 |
+| `backend/src/modules/users/users.routes.js` | 23 | if | 0 |
+| `backend/src/modules/users/users.routes.js` | 30 | if | 1 |
+| `backend/src/modules/users/users.routes.js` | 46 | binary-expr | 1 |

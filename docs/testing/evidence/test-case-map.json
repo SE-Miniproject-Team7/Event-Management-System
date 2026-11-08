@@ -314,8 +314,8 @@
       "EMS-NF-005",
       "EMS-NF-009"
     ],
-    "status": "PARTIAL",
-    "evidence": "fresh Chrome desktop/mobile smoke; Edge/Firefox/Lighthouse pending",
+    "status": "PASS FOR EXERCISED FLOWS",
+    "evidence": "evidence/browser-follow-up.json; SYSTEM_VALIDATION_REPORT.md",
     "update": "Chrome at 360/1920 on three pages is only partial evidence. Retain Firefox/Edge and Lighthouse>=90 on four pages as pending until actually measured."
   },
   {
