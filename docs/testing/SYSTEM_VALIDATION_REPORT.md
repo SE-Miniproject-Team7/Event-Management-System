@@ -9,9 +9,10 @@ the development/demo database. No real account credentials are included.
 
 ## Overall result: PARTIAL - not all original acceptance tests are complete
 
-The functional regression suites and fresh Chrome smoke flow passed. Outstanding
-human usability, full browser/accessibility, load-tool equivalence and deployed
-transport checks prevent a blanket statement that the entire Test Plan passed.
+The functional regression suites and browser follow-up passed for the tested
+flows. The usability test was run and individual timings remain unverified.
+The search degradation criterion failed, and deployed transport checks remain
+unexecuted.
 Original thresholds remain visible in [Test Cases v2](TEST_CASES_V2.md).
 
 ## Fresh browser/API walkthrough
@@ -83,7 +84,7 @@ remaining part. LOAD CHECK refers to the separately measured workload below.
 | TC-PERF-01 | LOAD CHECK | timed localhost search workload |
 | TC-PERF-02 | LOAD CHECK | timed localhost registration workload |
 | TC-AVL-01 | PARTIAL | health.test.js; databaseBackup.integration.cjs; timed /health sampling |
-| TC-USB-01 | PENDING HUMAN TEST | five first-time human participants required |
+| TC-USB-01 | RUN — individual time limit unverified | [Five-person observations](USABILITY_RECORD.md) |
 | TC-CMP-01 | PASS for the exercised flows | 8 November browser and accessibility follow-up |
 | TC-MNT-01 | AUTOMATED EVIDENCE | Jest coverage summary; frontend ESLint |
 | TC-TZ-01 | PARTIAL | dateTime.test.js; backend IST date-boundary cases |
@@ -98,8 +99,9 @@ remaining part. LOAD CHECK refers to the separately measured workload below.
 
 ## Remaining validation and limitations
 
-- TC-USB-01: five real participants, at least four successful within three minutes
-  and at most five clicks without help. Use [the observation form](USABILITY_RECORD.md).
+- TC-USB-01: all five participants registered independently in four clicks each.
+  The reported average was approximately 100 seconds. Individual times were
+  unavailable to verify the per-person limit. See [the observations](USABILITY_RECORD.md).
 - TC-CMP-01: see the 8 November follow-up for browser and Lighthouse results.
 - TC-SEC-02/deployed ZAP: not executed for localhost-only scope. Preserve this
   exception in DEVIATIONS; no instructor-approved waiver is asserted.
@@ -144,9 +146,8 @@ for the approved Introduction to Cybersecurity Workshop.
 | Workshop registration successful | 5/5 |
 | Registration errors observed | 0 |
 
-This was facilitator-performed account-based functional testing. It does not
-replace TC-USB-01, which remains pending five real first-time human participants.
-No usability timing or click-count results were collected.
+This was a separate account-based functional check. The later human usability
+results are in [TC-USB-01 observations](USABILITY_RECORD.md).
 
 ## Browser and accessibility follow-up
 

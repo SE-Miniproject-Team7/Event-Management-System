@@ -304,9 +304,9 @@
     "requirements": [
       "EMS-NF-004"
     ],
-    "status": "PENDING HUMAN TEST",
-    "evidence": "five first-time human participants required",
-    "update": "Record five real first-time participants using USABILITY_RECORD.md. AI/browser automation is not a substitute for human usability results."
+    "status": "RUN — individual time limit unverified",
+    "evidence": "USABILITY_RECORD.md; SYSTEM_VALIDATION_REPORT.md",
+    "update": "Five participants registered without help, using four clicks each. Reported mean time was about 100 seconds. Individual times were unavailable."
   },
   {
     "id": "TC-CMP-01",
