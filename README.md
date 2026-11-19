@@ -93,6 +93,29 @@ Open **http://localhost:5173**.
 
 ### 4. Optional: seed demo data
 
+For a live walkthrough, run the small demo seed from the repository root in PowerShell.
+Use a running local MongoDB replica set. Adjust the port and replica set name to match yours.
+Use the same `MONGO_URI` in the backend terminal when starting the app.
+
+```powershell
+$env:MONGO_URI = 'mongodb://127.0.0.1:27030/ems_demo?replicaSet=emsLocal&directConnection=true'
+$env:SEED_PASSWORD = Read-Host 'Choose a password for your local demo accounts'
+npm.cmd --prefix backend run seed:demo
+```
+
+Sign in with that password as `demo.admin@ems.local`, `demo.organizer@ems.local`,
+`demo.attendee1@ems.local` or `demo.attendee2@ems.local`. The command prints a
+run ID and a check-in code. Use the latest run ID to identify the three events.
+
+- **Approval practice** starts pending. Approve it as the demo admin.
+- **One-seat workshop** is published. Book as the two attendees, then cancel the first booking to show waitlist promotion.
+- **Check-in and reports** is published with one confirmed booking. Use the printed code as the demo organizer, then open the attendance report and export the CSV.
+
+Run the seed shortly before the demo. Each run creates a fresh set of events starting in 45 minutes
+with booking open for 30 minutes. The script only accepts the local `ems_demo` database.
+
+#### Large development dataset
+
 The backend seed script requires `SEED_PASSWORD` in `backend/.env`. It creates demo Admin, Organizer and Attendee accounts, categories, registrations and **5,000 synthetic events**. Run it only against a development database:
 
 ```bash
